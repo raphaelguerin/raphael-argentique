@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4f4f1">
+<meta name="robots" content="noindex,nofollow">
+<title>Atelier — privé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,18..72,200;0,18..72,300;0,18..72,400;1,18..72,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#f4f4f1; --ink:#191814; --ash:#8b8a84; --faint:#b9b8b2;
+  --hair:#e2e2dc; --mat:#ffffff;
+  --disp:'Newsreader',Georgia,serif; --ui:'Inter',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --note:#fcf9ef;        /* papier note, chaud */
+  --tab:#eceae3;
+}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ash)}
+::selection{background:var(--ink);color:var(--paper)}
+
+/* ── GATE ── */
+#gate{position:fixed;inset:0;z-index:1000;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;transition:opacity .5s,visibility .5s}
+#gate.hidden{opacity:0;visibility:hidden}
+.gate-card{width:min(380px,92vw);text-align:left}
+.gate-card .eyebrow{margin-bottom:18px}
+.gate-card h1{font-family:var(--disp);font-weight:300;font-size:40px;line-height:1;letter-spacing:-.01em;margin-bottom:6px}
+.gate-card h1 em{font-style:italic}
+.gate-card p{color:var(--ash);margin-bottom:30px;line-height:1.6}
+.gate-row{display:flex;border:1px solid var(--hair);background:var(--mat)}
+.gate-row input{flex:1;border:none;background:none;padding:15px 16px;font-family:var(--ui);font-size:15px;color:var(--ink);outline:none;letter-spacing:.04em}
+.gate-row button{padding:0 22px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.18em;text-transform:uppercase;transition:opacity .2s}
+.gate-row button:hover{opacity:.85}
+#gate-err{color:#b4453a;font-size:12px;margin-top:12px;height:14px;letter-spacing:.02em}
+.gate-foot{position:fixed;bottom:26px;left:0;right:0;text-align:center}
+.gate-foot a{color:var(--ash);text-decoration:none}
+.gate-foot a:hover{color:var(--ink)}
+
+/* ── APP ── */
+#app{height:100%;display:flex;flex-direction:column;opacity:0;transition:opacity .5s}
+#app.on{opacity:1}
+
+.bar{flex:0 0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 clamp(16px,3vw,28px);border-bottom:1px solid var(--hair);background:rgba(244,244,241,.9);backdrop-filter:blur(8px);z-index:20}
+.bar .who{display:flex;align-items:baseline;gap:12px;min-width:0}
+.bar .who b{font-family:var(--disp);font-weight:300;font-size:22px}
+.bar .who .label{white-space:nowrap}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tool{border:1px solid var(--hair);background:var(--mat);padding:9px 13px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,background .2s}
+.tool:hover{border-color:var(--ink)}
+.tool .plus{font-size:14px;line-height:1}
+.tool.ghost{border-color:transparent;color:var(--ash)}
+.tool.ghost:hover{color:var(--ink)}
+.saved{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.saved.flash{color:var(--ink)}
+
+/* ── CANVAS ── */
+#scroll{flex:1 1 auto;overflow:auto;position:relative}
+#canvas{position:relative;width:2800px;height:1900px;
+  background-image:radial-gradient(var(--hair) 1.1px,transparent 1.1px);
+  background-size:30px 30px;background-position:-1px -1px;}
+
+/* ── CARD ── */
+.card{position:absolute;background:var(--mat);border:1px solid var(--hair);
+  box-shadow:0 1px 0 rgba(0,0,0,.02),0 18px 40px -32px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;min-width:150px;min-height:90px;}
+.card.grab{box-shadow:0 1px 0 rgba(0,0,0,.02),0 30px 60px -28px rgba(0,0,0,.55);}
+.card .head{flex:0 0 auto;height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:grab;border-bottom:1px solid var(--hair);background:var(--tab);touch-action:none}
+.card.grab .head{cursor:grabbing}
+.card .head .tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
+.card .head .del{font-size:13px;color:var(--faint);width:18px;height:18px;line-height:16px;text-align:center;border-radius:50%}
+.card .head .del:hover{color:#b4453a}
+.card .body{flex:1 1 auto;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.card .rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;touch-action:none;
+  background:linear-gradient(135deg,transparent 50%,var(--faint) 50%,var(--faint) 60%,transparent 60%,transparent 72%,var(--faint) 72%,var(--faint) 82%,transparent 82%);opacity:.6}
+
+/* note */
+.card.note{background:var(--note)}
+.card.note .head{background:#f3efe2}
+.card.note .body{padding:0}
+.card .note-text{flex:1;width:100%;border:none;background:none;resize:none;outline:none;
+  font-family:var(--ui);font-size:14px;line-height:1.55;color:var(--ink);padding:12px 14px;letter-spacing:.005em}
+.card .note-text::placeholder{color:var(--faint)}
+
+/* image */
+.card.image .body{cursor:default}
+.card.image img{width:100%;height:100%;object-fit:cover;display:block}
+.card.image .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--ash);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:repeating-linear-gradient(45deg,transparent,transparent 9px,rgba(0,0,0,.02) 9px,rgba(0,0,0,.02) 10px)}
+.card.image .cap{position:absolute;left:0;right:0;bottom:0;padding:7px 10px;background:linear-gradient(to top,rgba(0,0,0,.55),transparent);color:#fff;font-size:10px;letter-spacing:.08em}
+
+/* lien */
+.card.link .body{padding:14px}
+.card .lk-title{font-family:var(--disp);font-size:18px;font-weight:300;line-height:1.2;outline:none;margin-bottom:8px}
+.card .lk-title:empty::before{content:'Titre du lien';color:var(--faint)}
+.card .lk-url{display:flex;gap:6px;align-items:center}
+.card .lk-url input{flex:1;border:none;border-bottom:1px solid var(--hair);background:none;font-family:var(--ui);font-size:12px;color:var(--ash);outline:none;padding:3px 0}
+.card .lk-go{flex:0 0 auto;border:1px solid var(--hair);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink)}
+.card .lk-go:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* projet */
+.card.project{background:var(--mat)}
+.card.project .body{padding:14px}
+.card .pr-title{font-family:var(--disp);font-size:21px;font-weight:300;line-height:1.1;letter-spacing:-.01em;outline:none}
+.card .pr-title:empty::before{content:'Nom du projet';color:var(--faint)}
+.card .pr-status{display:inline-flex;align-items:center;gap:6px;margin:10px 0;padding:4px 10px;border:1px solid var(--hair);font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;user-select:none}
+.card .pr-status .dotp{width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.card .pr-desc{font-size:13px;line-height:1.55;color:var(--ash);outline:none;flex:1}
+.card .pr-desc:empty::before{content:'Notes, intentions, pellicule…';color:var(--faint)}
+
+/* ── PICKER ── */
+#picker{position:fixed;inset:0;z-index:500;background:rgba(25,24,20,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
+#picker.on{display:flex}
+.pk-panel{background:var(--paper);width:min(720px,96vw);max-height:84vh;display:flex;flex-direction:column;border:1px solid var(--hair);box-shadow:0 40px 90px -40px rgba(0,0,0,.6)}
+.pk-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--hair)}
+.pk-head h3{font-family:var(--disp);font-weight:300;font-size:22px}
+.pk-url{display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid var(--hair)}
+.pk-url input{flex:1;border:1px solid var(--hair);background:var(--mat);padding:10px 12px;font-family:var(--ui);font-size:13px;outline:none}
+.pk-url button{padding:0 16px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.pk-grid{overflow:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.pk-grid figure{cursor:pointer;background:var(--mat);border:1px solid var(--hair);transition:border-color .15s,transform .15s}
+.pk-grid figure:hover{border-color:var(--ink);transform:translateY(-2px)}
+.pk-grid img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}
+.pk-grid figcaption{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);padding:5px 7px}
+.pk-close{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
+.pk-close:hover{color:var(--ink)}
+
+.hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.06em;padding:9px 16px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}
+.hint.show{opacity:.92}
+
+@media(max-width:680px){
+  .bar{height:auto;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 16px}
+  .tools{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- ── GATE ── -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="eyebrow label">Raphaël — espace privé</div>
+    <h1>L'<em>atelier</em></h1>
+    <p>Projets en cours et inspirations. Accès réservé.</p>
+    <div class="gate-row">
+      <input id="gate-input" type="password" placeholder="Mot de passe" autocomplete="current-password" aria-label="Mot de passe">
+      <button id="gate-btn">Entrer</button>
+    </div>
+    <div id="gate-err"></div>
+  </div>
+  <div class="gate-foot"><a href="index.html">← Retour au site</a></div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="bar">
+    <div class="who"><b>Atelier</b><span class="label">Projets &amp; inspirations</span></div>
+    <div class="tools">
+      <button class="tool" data-add="note"><span class="plus">+</span> Note</button>
+      <button class="tool" data-add="image"><span class="plus">+</span> Image</button>
+      <button class="tool" data-add="link"><span class="plus">+</span> Lien</button>
+      <button class="tool" data-add="project"><span class="plus">+</span> Projet</button>
+      <span class="saved" id="saved">enregistré</span>
+      <button class="tool ghost" id="reset">Vider</button>
+      <a class="tool ghost" href="index.html">↗ Site</a>
+    </div>
+  </div>
+  <div id="scroll">
+    <div id="canvas"></div>
+  </div>
+</div>
+
+<!-- ── PICKER ── -->
+<div id="picker">
+  <div class="pk-panel">
+    <div class="pk-head"><h3>Choisir une image</h3><button class="pk-close" id="pk-close">Fermer ✕</button></div>
+    <div class="pk-url">
+      <input id="pk-input" type="url" placeholder="…ou coller une adresse https://">
+      <button id="pk-add">Ajouter</button>
+    </div>
+    <div class="pk-grid" id="pk-grid"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   ATELIER — moodboard privé
+   ─ Pour changer le mot de passe, modifie la ligne ci-dessous.
+   ─ Protection légère côté navigateur (ne pas y mettre de secrets).
+   ════════════════════════════════════════════════════════ */
+const PASS = "argentique";
+
+/* Images du site, proposées dans le sélecteur */
+const SITE_IMAGES = [
+  ["img_5825.jpg","01.01 Ligne de crête"],["img_5827.jpg","01.02 Massif"],
+  ["img_5841.jpg","01.03 Sous le pin"],["img_5829.jpg","01.04 Forêt"],
+  ["img_5828.jpg","01.05 File d'attente"],["img_5833.jpg","01.06 Le chalet"],
+  ["img_5835.jpg","01.07 Vallée"],["img_5839.jpg","01.08 Versant nord"],
+  ["img_3859.jpg","02.01 Ville sur l'eau"],["img_3861.jpg","02.02 Front de mer"],
+  ["img_3863.jpg","02.03 Sable chaud"],["img_3867.jpg","02.04 Ciel rose"],
+  ["img_3893.jpg","02.05 Bouée"],["img_3868.jpg","02.06 Le port"],
+  ["img_3870.jpg","02.07 Place du soir"],["img_3872.jpg","02.08 Bain"],
+  ["img_3885.jpg","02.09 Reflets 19h"],["img_3874.jpg","02.10 Façades"],
+  ["img_3876.jpg","02.11 Dernier bain"],["img_3883.jpg","02.12 Kayaks"],
+  ["img_3880.jpg","02.13 Soleil bas"],["img_3869.jpg","02.14 Silhouettes"],
+  ["img_3887.jpg","02.15 Or sur l'eau"],["img_3889.jpg","02.16 Couchant"],
+  ["img_3891.jpg","02.17 Dernière lumière"]
+];
+const STATUSES = ["Idée","En cours","Tirage","Édition","Archivé"];
+const KEY = "atelier_raphael_v1";
+
+/* ── état + persistance ── */
+let state = { items: [], z: 1 };
+let memoryOnly = false;
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(raw){ state = JSON.parse(raw); return true; } }
+  catch(e){ memoryOnly = true; }
+  return false;
+}
+let saveT;
+function save(){
+  if(memoryOnly) return flagSaved();
+  clearTimeout(saveT);
+  saveT = setTimeout(()=>{
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); flagSaved(); }
+    catch(e){ memoryOnly = true; }
+  },350);
+}
+function flagSaved(){
+  const s=document.getElementById('saved');
+  s.textContent = memoryOnly ? "session seule" : "enregistré";
+  if(!memoryOnly){ s.classList.add('flash'); setTimeout(()=>s.classList.remove('flash'),700); }
+}
+
+/* ── plateau par défaut (1re visite) ── */
+function seed(){
+  state = { items: [], z: 1 };
+  add('project',{x:60,y:50,w:250,h:210,data:{title:"Neige noire",status:0,desc:"Série 01 — HP5+ 400, Font-Romeu. Sélection finale 8/36. Tirages baryté à caler."}},true);
+  add('project',{x:340,y:50,w:250,h:210,data:{title:"Hossegor 19h",status:2,desc:"Série 02 — UltraMax 400. 17 vues en ligne. Penser à un mini-zine couleur."}},true);
+  add('project',{x:620,y:50,w:250,h:210,data:{title:"Petit inventaire",status:1,desc:"Série 03 — Portra 400, Canon AE-1. Shooting intérieurs à planifier."}},true);
+  add('note',{x:900,y:50,w:230,h:150,data:{text:"Idée : pousser la Delta 3200 en intérieur, nuit, lumière unique. Pour la série 04."}},true);
+  add('image',{x:60,y:300,w:260,h:180,data:{src:"images/img_3869.jpg",cap:"réf. lumière 19h"}},true);
+  add('link',{x:350,y:300,w:280,h:140,data:{title:"Labo de tirage",url:"https://"}},true);
+  add('note',{x:660,y:300,w:240,h:150,data:{text:"Inspiration : palette froide pour la montagne, chaude pour la côte. Garder le grain visible."}},true);
+  save();
+}
+
+/* ── création de carte ── */
+let uid = Date.now();
+function add(type, opts={}, silent=false){
+  const it = {
+    id: ++uid, type,
+    x: opts.x ?? (document.getElementById('scroll').scrollLeft + 90),
+    y: opts.y ?? (document.getElementById('scroll').scrollTop + 90),
+    w: opts.w ?? defW(type), h: opts.h ?? defH(type),
+    z: ++state.z, data: opts.data ?? defData(type)
+  };
+  state.items.push(it);
+  render(it);
+  if(!silent) save();
+  return it;
+}
+function defW(t){return t==='note'?220:t==='image'?260:t==='link'?280:250;}
+function defH(t){return t==='note'?150:t==='image'?180:t==='link'?140:210;}
+function defData(t){
+  if(t==='note')return{text:""};
+  if(t==='image')return{src:"",cap:""};
+  if(t==='link')return{title:"",url:"https://"};
+  return{title:"",status:0,desc:""};
+}
+
+/* ── rendu d'une carte ── */
+const canvas = document.getElementById('canvas');
+function render(it){
+  let el = document.getElementById('c'+it.id);
+  if(el) el.remove();
+  el = document.createElement('div');
+  el.className = 'card '+it.type; el.id='c'+it.id;
+  el.style.left=it.x+'px'; el.style.top=it.y+'px';
+  el.style.width=it.w+'px'; el.style.height=it.h+'px'; el.style.zIndex=it.z;
+
+  const tag = {note:'Note',image:'Image',link:'Lien',project:'Projet'}[it.type];
+  el.innerHTML = `<div class="head"><span class="tag">${tag}</span><span class="del" title="Supprimer">✕</span></div><div class="body"></div><div class="rs" title="Redimensionner"></div>`;
+  const body = el.querySelector('.body');
+
+  if(it.type==='note'){
+    const ta=document.createElement('textarea');
+    ta.className='note-text'; ta.placeholder='Écrire…'; ta.value=it.data.text||"";
+    ta.addEventListener('input',()=>{it.data.text=ta.value;save();});
+    body.appendChild(ta);
+  }
+  else if(it.type==='image'){
+    paintImage(it, body);
+  }
+  else if(it.type==='link'){
+    const t=document.createElement('div');t.className='lk-title';t.contentEditable=true;t.textContent=it.data.title||"";
+    t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
+    const row=document.createElement('div');row.className='lk-url';
+    const inp=document.createElement('input');inp.value=it.data.url||"https://";inp.placeholder="https://";
+    inp.addEventListener('input',()=>{it.data.url=inp.value;save();});
+    const go=document.createElement('button');go.className='lk-go';go.textContent='↗';go.title='Ouvrir';
+    go.addEventListener('click',()=>{const u=it.data.url||"";if(/^https?:\/\/.+/.test(u))window.open(u,'_blank','noopener');else flash("Adresse incomplète");});
+    row.appendChild(inp);row.appendChild(go);
+    body.appendChild(t);body.appendChild(row);
+  }
+  else if(it.type==='project'){
+    const t=document.createElement('div');t.className='pr-title';t.contentEditable=true;t.textContent=it.data.title||"";
+    t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
+    const st=document.createElement('div');st.className='pr-status';
+    const setSt=()=>{st.innerHTML='<span class="dotp"></span>'+STATUSES[it.data.status%STATUSES.length];};
+    setSt();
+    st.addEventListener('click',()=>{it.data.status=(it.data.status+1)%STATUSES.length;setSt();save();});
+    const d=document.createElement('div');d.className='pr-desc';d.contentEditable=true;d.textContent=it.data.desc||"";
+    d.addEventListener('input',()=>{it.data.desc=d.textContent;save();});
+    body.appendChild(t);body.appendChild(st);body.appendChild(d);
+  }
+
+  // supprimer
+  el.querySelector('.del').addEventListener('click',e=>{
+    e.stopPropagation();
+    state.items=state.items.filter(x=>x.id!==it.id);
+    el.remove(); save();
+  });
+
+  // drag (sur la barre)
+  dragify(el, el.querySelector('.head'), it);
+  // resize
+  resizify(el, el.querySelector('.rs'), it);
+  // focus → premier plan
+  el.addEventListener('pointerdown',()=>{ it.z=++state.z; el.style.zIndex=it.z; save(); });
+
+  canvas.appendChild(el);
+}
+
+function paintImage(it, body){
+  body.innerHTML='';
+  if(it.data.src){
+    const img=document.createElement('img');img.src=it.data.src;img.alt=it.data.cap||"";img.draggable=false;
+    body.appendChild(img);
+    if(it.data.cap){const c=document.createElement('div');c.className='cap';c.textContent=it.data.cap;body.appendChild(c);}
+    body.style.cursor='zoom-in';
+    body.onclick=()=>openPicker(it);
+  } else {
+    const e=document.createElement('div');e.className='empty';e.textContent='Choisir une image';
+    body.appendChild(e);
+    body.onclick=()=>openPicker(it);
+  }
+}
+
+/* ── drag ── */
+function dragify(el, handle, it){
+  let sx,sy,ox,oy,drag=false;
+  handle.addEventListener('pointerdown',e=>{
+    if(e.target.classList.contains('del'))return;
+    drag=true; el.classList.add('grab');
+    sx=e.clientX; sy=e.clientY; ox=it.x; oy=it.y;
+    it.z=++state.z; el.style.zIndex=it.z;
+    handle.setPointerCapture(e.pointerId);
+  });
+  handle.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    it.x=Math.max(0,Math.min(canvas.offsetWidth-it.w, ox+(e.clientX-sx)));
+    it.y=Math.max(0,Math.min(canvas.offsetHeight-it.h, oy+(e.clientY-sy)));
+    el.style.left=it.x+'px'; el.style.top=it.y+'px';
+  });
+  const end=()=>{ if(drag){drag=false;el.classList.remove('grab');save();} };
+  handle.addEventListener('pointerup',end);
+  handle.addEventListener('pointercancel',end);
+}
+
+/* ── resize ── */
+function resizify(el, h, it){
+  let sx,sy,ow,oh,rs=false;
+  h.addEventListener('pointerdown',e=>{
+    e.stopPropagation(); rs=true; sx=e.clientX; sy=e.clientY; ow=it.w; oh=it.h;
+    h.setPointerCapture(e.pointerId);
+  });
+  h.addEventListener('pointermove',e=>{
+    if(!rs)return;
+    it.w=Math.max(150, ow+(e.clientX-sx));
+    it.h=Math.max(90, oh+(e.clientY-sy));
+    el.style.width=it.w+'px'; el.style.height=it.h+'px';
+  });
+  const end=()=>{ if(rs){rs=false;save();} };
+  h.addEventListener('pointerup',end);
+  h.addEventListener('pointercancel',end);
+}
+
+/* ── picker d'image ── */
+let pickTarget=null;
+const picker=document.getElementById('picker');
+function buildPicker(){
+  const g=document.getElementById('pk-grid'); g.innerHTML='';
+  SITE_IMAGES.forEach(([fn,cap])=>{
+    const f=document.createElement('figure');
+    f.innerHTML=`<img loading="lazy" src="images/${fn}" alt=""><figcaption>${cap}</figcaption>`;
+    f.addEventListener('click',()=>{ if(pickTarget){pickTarget.data.src="images/"+fn; pickTarget.data.cap=cap; render(pickTarget); save();} closePicker(); });
+    g.appendChild(f);
+  });
+}
+function openPicker(it){ pickTarget=it; picker.classList.add('on'); }
+function closePicker(){ picker.classList.remove('on'); pickTarget=null; document.getElementById('pk-input').value=''; }
+document.getElementById('pk-close').addEventListener('click',closePicker);
+picker.addEventListener('click',e=>{if(e.target===picker)closePicker();});
+document.getElementById('pk-add').addEventListener('click',()=>{
+  const u=document.getElementById('pk-input').value.trim();
+  if(!/^https?:\/\/.+/.test(u))return flash("Adresse invalide");
+  if(pickTarget){pickTarget.data.src=u; pickTarget.data.cap=""; render(pickTarget); save();}
+  closePicker();
+});
+
+/* ── toolbar ── */
+document.querySelectorAll('[data-add]').forEach(b=>{
+  b.addEventListener('click',()=>{ const it=add(b.dataset.add); if(b.dataset.add==='image')openPicker(it); });
+});
+document.getElementById('reset').addEventListener('click',()=>{
+  if(confirm("Vider entièrement le tableau ? Cette action est définitive.")){
+    canvas.innerHTML=''; seed(); renderAll(); flash("Tableau réinitialisé");
+  }
+});
+
+function renderAll(){ canvas.innerHTML=''; state.items.forEach(render); }
+function flash(msg){const h=document.getElementById('hint');h.textContent=msg;h.classList.add('show');setTimeout(()=>h.classList.remove('show'),1600);}
+
+/* ── démarrage ── */
+function start(){
+  const had = load();
+  if(!had || !state.items || !state.items.length){ seed(); }
+  uid = Math.max(uid, ...state.items.map(i=>i.id), 0);
+  renderAll();
+  buildPicker();
+  document.getElementById('app').classList.add('on');
+  flagSaved();
+}
+
+/* ── gate ── */
+const gate=document.getElementById('gate');
+function tryEnter(){
+  const v=document.getElementById('gate-input').value;
+  if(v===PASS){
+    try{ sessionStorage.setItem('atelier_ok','1'); }catch(e){}
+    gate.classList.add('hidden'); start();
+  } else {
+    document.getElementById('gate-err').textContent="Mot de passe incorrect.";
+    document.getElementById('gate-input').value="";
+  }
+}
+document.getElementById('gate-btn').addEventListener('click',tryEnter);
+document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryEnter();});
+// déjà entré dans cette session ?
+try{ if(sessionStorage.getItem('atelier_ok')==='1'){ gate.classList.add('hidden'); start(); } else { document.getElementById('gate-input').focus(); } }
+catch(e){ document.getElementById('gate-input').focus(); }
+</script>
+</body>
+</html>
