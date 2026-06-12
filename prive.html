@@ -79,7 +79,7 @@ body.panning *{user-select:none!important}
 .boardsel{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--hair);background:var(--mat);border-radius:2px;padding:0 4px 0 12px;position:relative}
 .boardsel .bn{font-family:var(--disp);font-size:16px;font-weight:300;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 0}
 .boardsel .cv{padding:8px;color:var(--ash);font-size:11px}
-.bmenu{position:absolute;top:calc(100% + 6px);left:0;min-width:240px;background:var(--mat);border:1px solid var(--hair);box-shadow:0 24px 50px -30px rgba(0,0,0,.5);z-index:60;display:none;max-height:60vh;overflow:auto}
+.bmenu{position:fixed;min-width:240px;background:var(--mat);border:1px solid var(--hair);box-shadow:0 24px 50px -30px rgba(0,0,0,.5);z-index:200;display:none;max-height:60vh;overflow:auto}
 .bmenu.on{display:block}
 .bmenu .bi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--hair)}
 .bmenu .bi:active{background:var(--tab)}
@@ -166,7 +166,7 @@ body.connecting .card{cursor:crosshair}
 .albumsel{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--hair);background:var(--mat);border-radius:2px;padding:0 4px 0 12px;position:relative}
 .albumsel .an{font-family:var(--disp);font-size:16px;font-weight:300;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 0}
 .albumsel .cv{padding:8px;color:var(--ash);font-size:11px}
-.amenu{position:absolute;top:calc(100% + 6px);left:0;min-width:220px;background:var(--mat);border:1px solid var(--hair);box-shadow:0 24px 50px -30px rgba(0,0,0,.5);z-index:60;display:none;max-height:60vh;overflow:auto}
+.amenu{position:fixed;min-width:220px;background:var(--mat);border:1px solid var(--hair);box-shadow:0 24px 50px -30px rgba(0,0,0,.5);z-index:200;display:none;max-height:60vh;overflow:auto}
 .amenu.on{display:block}
 .amenu .ai{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--hair)}
 .amenu .ai:active{background:var(--tab)}
@@ -620,8 +620,9 @@ function renderBoardBar(){
   boardMenu.appendChild(add);
 }
 function switchBoard(id){ if(connectMode)document.getElementById('connect-btn').click(); state.activeBoard=id; renderBoardBar(); renderBoard(); save(); }
-document.getElementById('board-menu-btn').addEventListener('click',()=>boardMenu.classList.toggle('on'));
-document.getElementById('board-name').addEventListener('click',()=>boardMenu.classList.toggle('on'));
+function toggleBoardMenu(){ const open=!boardMenu.classList.contains('on'); if(open)placeMenu(boardMenu,document.querySelector('.boardsel')); boardMenu.classList.toggle('on',open); }
+document.getElementById('board-menu-btn').addEventListener('click',toggleBoardMenu);
+document.getElementById('board-name').addEventListener('click',toggleBoardMenu);
 document.addEventListener('click',e=>{ if(!e.target.closest('.boardsel'))boardMenu.classList.remove('on'); });
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
@@ -660,8 +661,10 @@ function renderAlbumBar(){
   addRow.addEventListener('click',()=>{ const a=newAlbum("Album "+(state.albums.length+1)); state.albums.push(a); state.activeAlbum=a.id; renderAlbumBar();renderGallery();albumMenu.classList.remove('on');save(); });
   albumMenu.appendChild(addRow);
 }
-document.getElementById('album-menu-btn').addEventListener('click',()=>albumMenu.classList.toggle('on'));
-document.getElementById('album-name').addEventListener('click',()=>albumMenu.classList.toggle('on'));
+function placeMenu(menu,sel){ const r=sel.getBoundingClientRect(); menu.style.left=Math.max(8,r.left)+'px'; menu.style.top=(r.bottom+6)+'px'; }
+function toggleAlbumMenu(){ const open=!albumMenu.classList.contains('on'); if(open)placeMenu(albumMenu,document.querySelector('.albumsel')); albumMenu.classList.toggle('on',open); }
+document.getElementById('album-menu-btn').addEventListener('click',toggleAlbumMenu);
+document.getElementById('album-name').addEventListener('click',toggleAlbumMenu);
 document.addEventListener('click',e=>{ if(!e.target.closest('.albumsel'))albumMenu.classList.remove('on'); });
 
 function renderGallery(){
