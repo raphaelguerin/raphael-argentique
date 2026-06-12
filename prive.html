@@ -413,29 +413,80 @@ const Store={
 };
 function save(){ persist(false); }
 /* ── sauvegarde Firestore splitée : état léger + images séparées ── */
+/* ── extraction / persistance des images (toujours séparées du doc principal) ── */
+function collectImgRefs(s){
+  // retourne tous les objets {obj, key} dont la valeur src est un data: URL
+  const refs=[];
+  (s.boards||[]).forEach(b=>(b.items||[]).forEach(it=>{
+    if(it.type==='image'&&it.data){
+      if(it.data.src&&it.data.src.startsWith('data:')) refs.push({obj:it.data,key:'src',id:it.id});
+    }
+  }));
+  (s.albums||[]).forEach(al=>(al.images||[]).forEach(g=>{
+    if(g.src&&g.src.startsWith('data:')) refs.push({obj:g,key:'src',id:g.id});
+  }));
+  return refs;
+}
 function stripImages(s){
   const copy=JSON.parse(JSON.stringify(s));
-  copy.boards.forEach(b=>b.items.forEach(it=>{ if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:')){ it.data._imgRef=it.id; it.data.src='__ref__'; } }));
-  (copy.albums||[]).forEach(al=>{ al.images=(al.images||[]).map(g=>{ if(g.src&&g.src.startsWith('data:'))return{...g,src:'__ref__',_imgRef:g.id}; return g; }); });
+  // retirer TOUS les data: URLs du doc principal
+  (copy.boards||[]).forEach(b=>(b.items||[]).forEach(it=>{
+    if(it.type==='image'&&it.data&&it.data.src&&it.data.src.startsWith('data:')){
+      it.data._imgRef=it.id; it.data.src='__ref__';
+    }
+  }));
+  (copy.albums||[]).forEach(al=>{
+    al.images=(al.images||[]).map(g=>{
+      if(g.src&&g.src.startsWith('data:'))return{...g,src:'__ref__',_imgRef:g.id};
+      return g;
+    });
+  });
+  // vérification : aucun data: ne doit subsister
+  const json=JSON.stringify(copy);
+  if(json.includes('"data:')){ console.error('STRIP INCOMPLET — data: encore présent'); }
   return copy;
 }
 async function saveImages(db,uid,s){
-  const col=db.collection('ateliers').doc(uid).collection('imgs'); const writes=[];
-  s.boards.forEach(b=>b.items.forEach(it=>{ if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:')) writes.push({id:it.id,src:it.data.src}); }));
-  (s.albums||[]).forEach(al=>(al.images||[]).forEach(g=>{ if(g.src&&g.src.startsWith('data:'))writes.push({id:g.id,src:g.src}); }));
-  await Promise.all(writes.map(w=>col.doc(w.id).set({src:w.src})));
+  const col=db.collection('ateliers').doc(uid).collection('imgs');
+  const refs=collectImgRefs(s);
+  if(!refs.length)return;
+  await Promise.all(refs.map(r=>col.doc(r.id).set({src:r.obj[r.key]})));
 }
 async function loadImages(db,uid,s){
   const col=db.collection('ateliers').doc(uid).collection('imgs');
   const refs=new Set();
-  s.boards.forEach(b=>b.items.forEach(it=>{ if(it.data&&it.data._imgRef)refs.add(it.data._imgRef); }));
+  (s.boards||[]).forEach(b=>(b.items||[]).forEach(it=>{ if(it.data&&it.data._imgRef)refs.add(it.data._imgRef); }));
   (s.albums||[]).forEach(al=>(al.images||[]).forEach(g=>{ if(g._imgRef)refs.add(g._imgRef); }));
   if(!refs.size)return s;
   const snaps=await Promise.all([...refs].map(id=>col.doc(id).get()));
   const map={}; snaps.forEach(sn=>{ if(sn.exists)map[sn.id]=sn.data().src; });
-  s.boards.forEach(b=>b.items.forEach(it=>{ if(it.data&&it.data._imgRef&&map[it.data._imgRef]){ it.data.src=map[it.data._imgRef]; delete it.data._imgRef; } }));
-  (s.albums||[]).forEach(al=>{ al.images=(al.images||[]).map(g=>{ if(g._imgRef&&map[g._imgRef]){ const{_imgRef,...rest}=g; return{...rest,src:map[_imgRef]}; } return g; }); });
+  (s.boards||[]).forEach(b=>(b.items||[]).forEach(it=>{
+    if(it.data&&it.data._imgRef){ it.data.src=map[it.data._imgRef]||''; delete it.data._imgRef; }
+  }));
+  (s.albums||[]).forEach(al=>{
+    al.images=(al.images||[]).map(g=>{
+      if(g._imgRef){ const{_imgRef,...rest}=g; return{...rest,src:map[_imgRef]||''}; }
+      return g;
+    });
+  });
   return s;
+}
+
+/* ── réparation au démarrage : nettoyer les data: coincés dans le doc principal ── */
+async function repairImages(db,uid){
+  try{
+    const snap=await fbDoc.get();
+    if(!snap.exists||!snap.data().json)return;
+    const s=JSON.parse(snap.data().json);
+    const refs=collectImgRefs(s); if(!refs.length)return;
+    // il y a des data: dans le doc principal → les extraire et réécrire
+    flash("Réparation en cours…");
+    await saveImages(db,uid,s);
+    const light=stripImages(s);
+    const json=JSON.stringify(light); lastJSON=json;
+    await fbDoc.set({json,ts:Date.now()});
+    flash("Réparation terminée ✓");
+  }catch(e){ console.warn('repair failed',e); }
 }
 
 function persist(immediate){
@@ -763,9 +814,11 @@ async function startFB(){
   const db=firebase.firestore();
   fbDoc=db.collection('ateliers').doc(fbUser.uid);
   try{
+    // 1) réparer d'abord si des data: sont coincés dans le doc principal
+    await repairImages(db,fbUser.uid);
+    // 2) charger l'état (maintenant propre)
     const snap=await fbDoc.get();
     if(snap.exists && snap.data().json){
-      const db=firebase.firestore();
       state=JSON.parse(snap.data().json);
       state=await loadImages(db,fbUser.uid,state);
       lastJSON=snap.data().json;
