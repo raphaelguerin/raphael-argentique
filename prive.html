@@ -134,6 +134,11 @@ body.panning *{user-select:none!important}
 .pk-url{display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid var(--hair)}
 .pk-url input{flex:1;border:1px solid var(--hair);background:var(--mat);padding:11px 12px;font-family:var(--ui);font-size:16px;outline:none}
 .pk-url button{padding:0 16px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.pk-upload{padding:14px 20px;border-bottom:1px solid var(--hair)}
+.pk-filebtn{width:100%;padding:14px;border:1px dashed var(--ash);background:var(--mat);color:var(--ink);font-size:12px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:9px;transition:border-color .2s,background .2s}
+.pk-filebtn:active{border-color:var(--ink);background:var(--tab)}
+.pk-filebtn .ic{font-size:16px}
+.pk-or{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);padding:12px 20px 0}
 .pk-grid{overflow:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;-webkit-overflow-scrolling:touch}
 .pk-grid figure{cursor:pointer;background:var(--mat);border:1px solid var(--hair);transition:border-color .15s,transform .15s}
 .pk-grid figure:active{border-color:var(--ink);transform:translateY(-2px)}
@@ -200,10 +205,15 @@ body.panning *{user-select:none!important}
 <div id="picker">
   <div class="pk-panel">
     <div class="pk-head"><h3>Choisir une image</h3><button class="pk-close" id="pk-close">Fermer ✕</button></div>
+    <div class="pk-upload">
+      <button class="pk-filebtn" id="pk-file-btn"><span class="ic">⤓</span> Téléverser depuis l'appareil</button>
+      <input id="pk-file" type="file" accept="image/*" multiple hidden>
+    </div>
     <div class="pk-url">
       <input id="pk-input" type="url" placeholder="…ou coller une adresse https://">
       <button id="pk-add">Ajouter</button>
     </div>
+    <div class="pk-or">ou choisir dans les séries du site</div>
     <div class="pk-grid" id="pk-grid"></div>
   </div>
 </div>
@@ -247,7 +257,15 @@ let saveT;
 function save(){
   if(memoryOnly) return flagSaved();
   clearTimeout(saveT);
-  saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(state)); flagSaved(); }catch(e){ memoryOnly=true; } },350);
+  saveT = setTimeout(()=>{
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); flagSaved(); }
+    catch(e){
+      if(e && (e.name==='QuotaExceededError' || /quota/i.test(e.message||''))){
+        flash("Mémoire pleine — supprime quelques photos lourdes.");
+        document.getElementById('saved').textContent="mémoire pleine";
+      } else { memoryOnly=true; flagSaved(); }
+    }
+  },350);
 }
 function flagSaved(){
   const s=document.getElementById('saved');
@@ -454,6 +472,44 @@ document.getElementById('pk-add').addEventListener('click',()=>{
   if(pickTarget){pickTarget.data.src=u;pickTarget.data.cap="";render(pickTarget);save();}
   closePicker();
 });
+
+/* ── téléversement depuis l'appareil (avec compression) ── */
+function fileToDataURL(file, maxDim=1400, quality=0.82){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      const m=Math.max(w,h);
+      if(m>maxDim){ const r=maxDim/m; w=Math.round(w*r); h=Math.round(h*r); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      try{ res(c.toDataURL('image/jpeg',quality)); }catch(e){ rej(e); }
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('lecture impossible')); };
+    img.src=url;
+  });
+}
+async function handleFiles(list){
+  const files=[...list].filter(f=>f.type && f.type.startsWith('image/'));
+  if(!files.length){ flash("Aucune image reconnue"); return; }
+  flash(files.length>1?`Import de ${files.length} photos…`:"Import en cours…");
+  let first=true, k=0;
+  for(const f of files){
+    try{
+      const data=await fileToDataURL(f);
+      if(first && pickTarget){ pickTarget.data.src=data; pickTarget.data.cap=""; render(pickTarget); first=false; }
+      else { const it=add('image',{data:{src:data,cap:""}},true); it.x+=k*30; it.y+=k*30; render(it); }
+      k++;
+    }catch(e){ flash("Une photo n'a pas pu être importée"); }
+  }
+  save(); closePicker();
+  flash(files.length>1?`${files.length} photos importées`:"Photo importée");
+}
+const pkFile=document.getElementById('pk-file');
+document.getElementById('pk-file-btn').addEventListener('click',()=>pkFile.click());
+pkFile.addEventListener('change',e=>{ handleFiles(e.target.files); e.target.value=""; });
 
 /* ── toolbar ── */
 document.querySelectorAll('[data-add]').forEach(b=>{
