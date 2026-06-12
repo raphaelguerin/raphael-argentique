@@ -9,44 +9,45 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,18..72,200;0,18..72,300;0,18..72,400;1,18..72,300&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --paper:#f4f4f1; --ink:#191814; --ash:#8b8a84; --faint:#b9b8b2;
-  --hair:#e2e2dc; --mat:#ffffff;
+  --hair:#e2e2dc; --mat:#ffffff; --note:#fcf9ef; --tab:#eceae3;
+  --link:#7a7a72;
   --disp:'Newsreader',Georgia,serif; --ui:'Inter',system-ui,sans-serif;
   --ease:cubic-bezier(.2,.7,.2,1);
-  --note:#fcf9ef; --tab:#eceae3;
-  --safe-t:env(safe-area-inset-top,0px);
-  --safe-b:env(safe-area-inset-bottom,0px);
-  --safe-l:env(safe-area-inset-left,0px);
-  --safe-r:env(safe-area-inset-right,0px);
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
 }
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 body{background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:14px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ash)}
 ::selection{background:var(--ink);color:var(--paper)}
-body.panning{cursor:grabbing}
 body.panning *{user-select:none!important}
 
-/* ── GATE ── */
+/* GATE */
 #gate{position:fixed;inset:0;z-index:1000;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;transition:opacity .5s,visibility .5s}
 #gate.hidden{opacity:0;visibility:hidden}
 .gate-card{width:min(380px,92vw);text-align:left}
 .gate-card .eyebrow{margin-bottom:18px}
-.gate-card h1{font-family:var(--disp);font-weight:300;font-size:40px;line-height:1;letter-spacing:-.01em;margin-bottom:6px}
+.gate-card h1{font-family:var(--disp);font-weight:300;font-size:40px;line-height:1;margin-bottom:6px}
 .gate-card h1 em{font-style:italic}
 .gate-card p{color:var(--ash);margin-bottom:30px;line-height:1.6}
 .gate-row{display:flex;border:1px solid var(--hair);background:var(--mat)}
-.gate-row input{flex:1;border:none;background:none;padding:15px 16px;font-family:var(--ui);font-size:16px;color:var(--ink);outline:none;letter-spacing:.04em}
-.gate-row button{padding:0 22px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.18em;text-transform:uppercase;transition:opacity .2s}
+.gate-row input{flex:1;border:none;background:none;padding:15px 16px;font-size:16px;color:var(--ink);outline:none;letter-spacing:.04em}
+.gate-row button{padding:0 22px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
 .gate-row button:active{opacity:.7}
-#gate-err{color:#b4453a;font-size:12px;margin-top:12px;height:14px;letter-spacing:.02em}
+#gate-err{color:#b4453a;font-size:12px;margin-top:12px;height:14px}
 .gate-foot{position:fixed;bottom:calc(26px + var(--safe-b));left:0;right:0;text-align:center}
 .gate-foot a{color:var(--ash);text-decoration:none}
 
-/* ── APP ── */
+/* APP */
 #app{height:100%;display:flex;flex-direction:column;opacity:0;transition:opacity .5s}
 #app.on{opacity:1}
 
@@ -54,119 +55,162 @@ body.panning *{user-select:none!important}
   padding:8px clamp(12px,3vw,28px);padding-top:calc(8px + var(--safe-t));
   padding-left:calc(clamp(12px,3vw,28px) + var(--safe-l));padding-right:calc(clamp(12px,3vw,28px) + var(--safe-r));
   border-bottom:1px solid var(--hair);background:rgba(244,244,241,.92);backdrop-filter:blur(8px);z-index:20}
-.bar .who{display:flex;align-items:baseline;gap:12px;min-width:0;flex:0 0 auto}
+.bar .who{display:flex;align-items:center;gap:14px;min-width:0;flex:0 0 auto}
 .bar .who b{font-family:var(--disp);font-weight:300;font-size:22px}
-.bar .who .label{white-space:nowrap}
-.tools{display:flex;gap:7px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px}
-.tools::-webkit-scrollbar{display:none}
-.tool{flex:0 0 auto;border:1px solid var(--hair);background:var(--mat);padding:10px 13px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s;white-space:nowrap}
-.tool:active{border-color:var(--ink)}
-@media(hover:hover){.tool:hover{border-color:var(--ink)}}
-.tool .plus{font-size:15px;line-height:1}
-.tool.ghost{border-color:transparent;color:var(--ash)}
-.saved{flex:0 0 auto;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);white-space:nowrap;padding-left:4px}
+.tabs{display:flex;gap:4px}
+.tabbtn{padding:7px 13px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);border:1px solid transparent;border-radius:2px}
+.tabbtn.on{color:var(--ink);border-color:var(--hair);background:var(--mat)}
+.bar .right{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.saved{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
 .saved.flash{color:var(--ink)}
+.barlink{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);text-decoration:none}
 
-/* ── VIEWPORT + CANVAS (zoomable) ── */
+/* sub-bar */
+.subbar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:7px clamp(12px,3vw,28px);
+  padding-left:calc(clamp(12px,3vw,28px) + var(--safe-l));padding-right:calc(clamp(12px,3vw,28px) + var(--safe-r));
+  border-bottom:1px solid var(--hair);background:var(--paper);overflow-x:auto;scrollbar-width:none}
+.subbar::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto;border:1px solid var(--hair);background:var(--mat);padding:9px 12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:2px}
+.tool:active{border-color:var(--ink)}
+.tool.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tool .plus{font-size:15px}
+.tool.ghost{border-color:transparent;color:var(--ash)}
+.spacer{flex:1 1 auto;min-width:8px}
+.boardsel{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--hair);background:var(--mat);border-radius:2px;padding:0 4px 0 12px;position:relative}
+.boardsel .bn{font-family:var(--disp);font-size:16px;font-weight:300;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 0}
+.boardsel .cv{padding:8px;color:var(--ash);font-size:11px}
+.bmenu{position:absolute;top:calc(100% + 6px);left:0;min-width:240px;background:var(--mat);border:1px solid var(--hair);box-shadow:0 24px 50px -30px rgba(0,0,0,.5);z-index:60;display:none;max-height:60vh;overflow:auto}
+.bmenu.on{display:block}
+.bmenu .bi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--hair)}
+.bmenu .bi:active{background:var(--tab)}
+.bmenu .bi .nm{font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bmenu .bi.cur .nm{font-weight:600}
+.bmenu .bi .ops{display:flex;gap:4px}
+.bmenu .bi .op{width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:var(--ash);font-size:13px;border-radius:50%}
+.bmenu .bi .op:active{background:rgba(0,0,0,.06);color:var(--ink)}
+.bmenu .add{padding:12px 14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:8px}
+.bmenu .add:active{background:var(--tab)}
+
+/* VIEWPORT + CANVAS */
 #viewport{flex:1 1 auto;position:relative;overflow:hidden;touch-action:none;overscroll-behavior:none;background:var(--paper)}
 #canvas{position:absolute;top:0;left:0;width:2800px;height:1900px;transform-origin:0 0;will-change:transform;
   background-image:radial-gradient(var(--hair) 1.2px,transparent 1.2px);background-size:32px 32px;background-position:-1px -1px}
+#links{position:absolute;top:0;left:0;width:2800px;height:1900px;overflow:visible;pointer-events:none;z-index:1}
+#links path.wire{fill:none;stroke:var(--link);stroke-width:1.6}
+#links .killg{pointer-events:auto;cursor:pointer}
+#links .killg circle{fill:var(--paper);stroke:var(--link);stroke-width:1.4}
+#links .killg text{fill:var(--link);font-size:13px;font-family:var(--ui);text-anchor:middle;dominant-baseline:central}
+#links .killg:active circle{fill:var(--ink)}
+#links .killg:active text{fill:var(--paper)}
 
-/* ── CARD ── */
-.card{position:absolute;background:var(--mat);border:1px solid var(--hair);
+/* CARD */
+.card{position:absolute;background:var(--mat);border:1px solid var(--hair);z-index:5;
   box-shadow:0 1px 0 rgba(0,0,0,.02),0 18px 40px -32px rgba(0,0,0,.5);
   display:flex;flex-direction:column;min-width:150px;min-height:90px}
 .card.grab{box-shadow:0 1px 0 rgba(0,0,0,.02),0 32px 60px -26px rgba(0,0,0,.55);z-index:999!important}
+.card.csel{outline:2px solid var(--ink);outline-offset:2px}
+body.connecting .card{cursor:crosshair}
 .card .head{flex:0 0 auto;height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 10px;cursor:grab;border-bottom:1px solid var(--hair);background:var(--tab);touch-action:none;user-select:none}
 .card.grab .head{cursor:grabbing}
 .card .head .tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
 .card .head .del{font-size:15px;color:var(--faint);width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;flex:0 0 auto}
 .card .head .del:active{color:#b4453a;background:rgba(0,0,0,.05)}
-@media(hover:hover){.card .head .del:hover{color:#b4453a}}
 .card .body{flex:1 1 auto;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .card .rs{position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:nwse-resize;touch-action:none;
   background:linear-gradient(135deg,transparent 52%,var(--faint) 52%,var(--faint) 60%,transparent 60%,transparent 72%,var(--faint) 72%,var(--faint) 80%,transparent 80%);opacity:.7}
-
-/* note */
 .card.note{background:var(--note)}
 .card.note .head{background:#f3efe2}
-.card .note-text{flex:1;width:100%;border:none;background:none;resize:none;outline:none;font-family:var(--ui);font-size:14px;line-height:1.55;color:var(--ink);padding:12px 14px;letter-spacing:.005em}
+.card .note-text{flex:1;width:100%;border:none;background:none;resize:none;outline:none;font-size:14px;line-height:1.55;color:var(--ink);padding:12px 14px}
 .card .note-text::placeholder{color:var(--faint)}
-
-/* image */
 .card.image img{width:100%;height:100%;object-fit:cover;display:block}
 .card.image .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--ash);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:repeating-linear-gradient(45deg,transparent,transparent 9px,rgba(0,0,0,.02) 9px,rgba(0,0,0,.02) 10px)}
 .card.image .cap{position:absolute;left:0;right:0;bottom:0;padding:7px 10px;background:linear-gradient(to top,rgba(0,0,0,.55),transparent);color:#fff;font-size:10px;letter-spacing:.08em}
-
-/* lien */
 .card.link .body{padding:14px}
 .card .lk-title{font-family:var(--disp);font-size:18px;font-weight:300;line-height:1.2;outline:none;margin-bottom:8px}
 .card .lk-title:empty::before{content:'Titre du lien';color:var(--faint)}
 .card .lk-url{display:flex;gap:6px;align-items:center}
-.card .lk-url input{flex:1;border:none;border-bottom:1px solid var(--hair);background:none;font-family:var(--ui);font-size:13px;color:var(--ash);outline:none;padding:4px 0}
-.card .lk-go{flex:0 0 auto;border:1px solid var(--hair);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink)}
+.card .lk-url input{flex:1;border:none;border-bottom:1px solid var(--hair);background:none;font-size:13px;color:var(--ash);outline:none;padding:4px 0}
+.card .lk-go{flex:0 0 auto;border:1px solid var(--hair);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px}
 .card .lk-go:active{background:var(--ink);color:var(--paper)}
-
-/* projet */
 .card.project .body{padding:14px}
-.card .pr-title{font-family:var(--disp);font-size:21px;font-weight:300;line-height:1.1;letter-spacing:-.01em;outline:none}
+.card .pr-title{font-family:var(--disp);font-size:21px;font-weight:300;line-height:1.1;outline:none}
 .card .pr-title:empty::before{content:'Nom du projet';color:var(--faint)}
 .card .pr-status{display:inline-flex;align-items:center;gap:6px;margin:10px 0;padding:6px 11px;border:1px solid var(--hair);font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;user-select:none}
 .card .pr-status .dotp{width:6px;height:6px;border-radius:50%;background:var(--ink)}
 .card .pr-desc{font-size:13px;line-height:1.55;color:var(--ash);outline:none;flex:1}
 .card .pr-desc:empty::before{content:'Notes, intentions, pellicule…';color:var(--faint)}
 
-/* ── ZOOM CONTROLS ── */
-#zoomctl{position:fixed;right:calc(16px + var(--safe-r));bottom:calc(16px + var(--safe-b));z-index:30;
-  display:flex;flex-direction:column;background:var(--mat);border:1px solid var(--hair);box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+/* ZOOM */
+#zoomctl{position:fixed;right:calc(16px + var(--safe-r));bottom:calc(16px + var(--safe-b));z-index:30;display:flex;flex-direction:column;background:var(--mat);border:1px solid var(--hair);box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
 #zoomctl button{width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink);border-bottom:1px solid var(--hair)}
 #zoomctl button:last-child{border-bottom:none}
 #zoomctl button:active{background:var(--tab)}
-#zoomctl .zlevel{font-size:10px;letter-spacing:.06em;color:var(--ash);height:34px;border-bottom:1px solid var(--hair)}
+#zoomctl .zlevel{font-size:10px;color:var(--ash);height:34px}
 #zoomctl .zfit{font-size:14px}
+#zoomctl.hide{display:none}
 
-/* ── PICKER ── */
+/* GALLERY */
+#gallery{flex:1 1 auto;overflow:auto;display:none;padding:clamp(16px,3vw,30px);padding-bottom:calc(40px + var(--safe-b));-webkit-overflow-scrolling:touch}
+#gallery.on{display:block}
+.gal-empty{color:var(--ash);text-align:center;padding:60px 20px;line-height:1.7}
+.gal-grid{columns:3;column-gap:14px}
+@media(max-width:900px){.gal-grid{columns:2}}
+@media(max-width:560px){.gal-grid{columns:1}}
+.gal-item{break-inside:avoid;margin:0 0 14px;position:relative;background:var(--mat);padding:8px;box-shadow:0 1px 0 var(--hair),0 16px 36px -32px rgba(0,0,0,.5);cursor:zoom-in}
+.gal-item img{width:100%;height:auto;display:block}
+.gal-item .gcap{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);padding:8px 2px 2px}
+.gal-item .gdel{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(244,244,241,.92);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:14px;opacity:0;transition:opacity .2s}
+.gal-item:hover .gdel{opacity:1}
+@media(hover:none){.gal-item .gdel{opacity:1}}
+
+/* PICKER */
 #picker{position:fixed;inset:0;z-index:500;background:rgba(25,24,20,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
 #picker.on{display:flex}
 .pk-panel{background:var(--paper);width:min(720px,96vw);max-height:84vh;display:flex;flex-direction:column;border:1px solid var(--hair);box-shadow:0 40px 90px -40px rgba(0,0,0,.6)}
 .pk-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--hair)}
 .pk-head h3{font-family:var(--disp);font-weight:300;font-size:22px}
-.pk-url{display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid var(--hair)}
-.pk-url input{flex:1;border:1px solid var(--hair);background:var(--mat);padding:11px 12px;font-family:var(--ui);font-size:16px;outline:none}
-.pk-url button{padding:0 16px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 .pk-upload{padding:14px 20px;border-bottom:1px solid var(--hair)}
-.pk-filebtn{width:100%;padding:14px;border:1px dashed var(--ash);background:var(--mat);color:var(--ink);font-size:12px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:9px;transition:border-color .2s,background .2s}
+.pk-filebtn{width:100%;padding:14px;border:1px dashed var(--ash);background:var(--mat);color:var(--ink);font-size:12px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:9px}
 .pk-filebtn:active{border-color:var(--ink);background:var(--tab)}
 .pk-filebtn .ic{font-size:16px}
+.pk-url{display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid var(--hair)}
+.pk-url input{flex:1;border:1px solid var(--hair);background:var(--mat);padding:11px 12px;font-size:16px;outline:none}
+.pk-url button{padding:0 16px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 .pk-or{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);padding:12px 20px 0}
 .pk-grid{overflow:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;-webkit-overflow-scrolling:touch}
-.pk-grid figure{cursor:pointer;background:var(--mat);border:1px solid var(--hair);transition:border-color .15s,transform .15s}
+.pk-grid figure{cursor:pointer;background:var(--mat);border:1px solid var(--hair)}
 .pk-grid figure:active{border-color:var(--ink);transform:translateY(-2px)}
 .pk-grid img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}
 .pk-grid figcaption{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);padding:5px 7px}
 .pk-close{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
 
-.hint{position:fixed;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.04em;padding:10px 16px;opacity:0;transition:opacity .35s;pointer-events:none;z-index:40;text-align:center;max-width:90vw}
+/* LIGHTBOX */
+#glb{position:fixed;inset:0;z-index:600;background:rgba(244,244,241,.97);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+#glb.on{display:flex}
+#glb img{max-width:92vw;max-height:84vh;background:var(--mat);padding:12px;box-shadow:0 30px 80px -40px rgba(0,0,0,.6)}
+#glb .x{position:fixed;top:calc(20px + var(--safe-t));right:24px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);border:1px solid var(--hair);padding:9px 14px}
+#glb .gn{position:fixed;top:50%;transform:translateY(-50%);font-family:var(--disp);font-size:34px;color:var(--faint);padding:18px}
+#glb .gp{left:8px}#glb .gx{right:8px}
+
+.hint{position:fixed;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;padding:10px 16px;opacity:0;transition:opacity .35s;pointer-events:none;z-index:40;text-align:center;max-width:90vw}
 .hint.show{opacity:.92}
 
 @media(max-width:680px){
-  .bar .who .label{display:none}
-  .bar{flex-wrap:wrap}
-  .tool{padding:11px 12px}
-  .saved{display:none}
+  .bar .who b{font-size:19px}
+  .bar .barlink{display:none}
 }
 </style>
 </head>
 <body>
 
-<!-- ── GATE ── -->
 <div id="gate">
   <div class="gate-card">
     <div class="eyebrow label">Raphaël — espace privé</div>
     <h1>L'<em>atelier</em></h1>
-    <p>Projets en cours et inspirations. Accès réservé.</p>
+    <p id="gate-sub">Projets, inspirations, galerie. Accès réservé.</p>
+    <input id="gate-email" type="email" placeholder="Adresse e-mail" autocomplete="username" style="display:none;width:100%;border:1px solid var(--hair);background:var(--mat);padding:15px 16px;font-size:16px;color:var(--ink);outline:none;margin-bottom:8px">
     <div class="gate-row">
-      <input id="gate-input" type="password" placeholder="Mot de passe" autocomplete="current-password" aria-label="Mot de passe">
+      <input id="gate-input" type="password" placeholder="Mot de passe" autocomplete="current-password">
       <button id="gate-btn">Entrer</button>
     </div>
     <div id="gate-err"></div>
@@ -174,37 +218,64 @@ body.panning *{user-select:none!important}
   <div class="gate-foot"><a href="index.html">← Retour au site</a></div>
 </div>
 
-<!-- ── APP ── -->
 <div id="app">
   <div class="bar">
-    <div class="who"><b>Atelier</b><span class="label">Projets &amp; inspirations</span></div>
-    <div class="tools">
-      <button class="tool" data-add="note"><span class="plus">+</span> Note</button>
-      <button class="tool" data-add="image"><span class="plus">+</span> Image</button>
-      <button class="tool" data-add="link"><span class="plus">+</span> Lien</button>
-      <button class="tool" data-add="project"><span class="plus">+</span> Projet</button>
+    <div class="who">
+      <b>Atelier</b>
+      <div class="tabs">
+        <button class="tabbtn on" data-tab="boards">Tableaux</button>
+        <button class="tabbtn" data-tab="gallery">Galerie</button>
+      </div>
+    </div>
+    <div class="right">
       <span class="saved" id="saved">enregistré</span>
-      <button class="tool ghost" id="reset">Vider</button>
-      <a class="tool ghost" href="index.html">↗ Site</a>
+      <a class="barlink" id="logout" href="#" style="display:none">Déconnexion</a>
+      <a class="barlink" href="index.html">↗ Site</a>
     </div>
   </div>
 
-  <div id="viewport">
-    <div id="canvas"></div>
+  <!-- sous-barre TABLEAUX -->
+  <div class="subbar" id="subbar-boards">
+    <div class="boardsel">
+      <span class="bn" id="board-name">Tableau</span>
+      <button class="cv" id="board-menu-btn">▼</button>
+      <div class="bmenu" id="board-menu"></div>
+    </div>
+    <span class="spacer"></span>
+    <button class="tool" data-add="note"><span class="plus">+</span> Note</button>
+    <button class="tool" data-add="image"><span class="plus">+</span> Image</button>
+    <button class="tool" data-add="link"><span class="plus">+</span> Lien</button>
+    <button class="tool" data-add="project"><span class="plus">+</span> Projet</button>
+    <button class="tool" id="connect-btn">⤙ Relier</button>
+    <button class="tool ghost" id="clear-board">Vider</button>
   </div>
 
-  <div id="zoomctl">
-    <button id="z-in" aria-label="Zoom avant">+</button>
-    <button class="zlevel" id="z-level" aria-label="Réinitialiser le zoom">100%</button>
-    <button id="z-out" aria-label="Zoom arrière">−</button>
-    <button class="zfit" id="z-fit" aria-label="Tout afficher">⤢</button>
+  <!-- sous-barre GALERIE -->
+  <div class="subbar" id="subbar-gallery" style="display:none">
+    <button class="tool" id="gal-add"><span class="plus">+</span> Ajouter des images</button>
+    <span class="spacer"></span>
+    <span class="label" id="gal-count"></span>
   </div>
+
+  <!-- VUE TABLEAUX -->
+  <div id="viewport">
+    <div id="canvas"><svg id="links"></svg></div>
+  </div>
+  <div id="zoomctl">
+    <button id="z-in">+</button>
+    <button class="zlevel" id="z-level">100%</button>
+    <button id="z-out">−</button>
+    <button class="zfit" id="z-fit">⤢</button>
+  </div>
+
+  <!-- VUE GALERIE -->
+  <div id="gallery"></div>
 </div>
 
-<!-- ── PICKER ── -->
+<!-- PICKER -->
 <div id="picker">
   <div class="pk-panel">
-    <div class="pk-head"><h3>Choisir une image</h3><button class="pk-close" id="pk-close">Fermer ✕</button></div>
+    <div class="pk-head"><h3 id="pk-title">Choisir une image</h3><button class="pk-close" id="pk-close">Fermer ✕</button></div>
     <div class="pk-upload">
       <button class="pk-filebtn" id="pk-file-btn"><span class="ic">⤓</span> Téléverser depuis l'appareil</button>
       <input id="pk-file" type="file" accept="image/*" multiple hidden>
@@ -218,15 +289,34 @@ body.panning *{user-select:none!important}
   </div>
 </div>
 
+<!-- LIGHTBOX GALERIE -->
+<div id="glb">
+  <button class="x" id="glb-x">Fermer ✕</button>
+  <button class="gn gp" id="glb-prev">‹</button>
+  <img id="glb-img" src="" alt="">
+  <button class="gn gx" id="glb-next">›</button>
+</div>
+
 <div class="hint" id="hint"></div>
 
 <script>
-/* ════════════════════════════════════════════════════════
-   ATELIER — moodboard privé, plan zoomable
-   ─ Mot de passe : modifier la constante PASS ci-dessous.
-   ─ Protection légère côté navigateur (pas de secrets ici).
-   ════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   ATELIER v2 — tableaux multiples · connexions · galerie
+   ─ Mot de passe : constante PASS ci-dessous.
+   ─ SYNCHRO : laisser FIREBASE_CONFIG=null pour l'instant (sauvegarde
+     locale). On le remplira à l'étape Firebase pour synchroniser.
+   ════════════════════════════════════════════════════════════════ */
 const PASS = "argentique";
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBp5tIsUWR2rtazPpsD-T1PBUl0KdZ-MBQ",
+  authDomain: "atelier-raphael.firebaseapp.com",
+  projectId: "atelier-raphael",
+  storageBucket: "atelier-raphael.firebasestorage.app",
+  messagingSenderId: "610134831747",
+  appId: "1:610134831747:web:199cbd4451906e8f27a1b6"
+};
+const USE_FB = !!FIREBASE_CONFIG;
+let fbUser=null, fbDoc=null, lastJSON="", saveT2=null;
 
 const SITE_IMAGES = [
   ["img_5825.jpg","01.01 Ligne de crête"],["img_5827.jpg","01.02 Massif"],
@@ -244,306 +334,461 @@ const SITE_IMAGES = [
   ["img_3891.jpg","02.17 Dernière lumière"]
 ];
 const STATUSES = ["Idée","En cours","Tirage","Édition","Archivé"];
-const KEY = "atelier_raphael_v1";
+const KEY="atelier_raphael_v2", OLDKEY="atelier_raphael_v1";
 
-let state = { items: [], z: 1 };
-let memoryOnly = false;
-function load(){
-  try{ const raw = localStorage.getItem(KEY); if(raw){ state = JSON.parse(raw); return true; } }
-  catch(e){ memoryOnly = true; }
-  return false;
+/* ── état ── */
+let state=null, uid=Date.now(), memoryOnly=false;
+function uid8(p){return (p||'')+(++uid).toString(36);}
+
+function defaultState(){
+  const b=newBoard("Tableau principal");
+  seedBoard(b);
+  return { boards:[b], activeBoard:b.id, gallery:[], z:50 };
 }
-let saveT;
-function save(){
-  if(memoryOnly) return flagSaved();
-  clearTimeout(saveT);
-  saveT = setTimeout(()=>{
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); flagSaved(); }
-    catch(e){
-      if(e && (e.name==='QuotaExceededError' || /quota/i.test(e.message||''))){
-        flash("Mémoire pleine — supprime quelques photos lourdes.");
-        document.getElementById('saved').textContent="mémoire pleine";
-      } else { memoryOnly=true; flagSaved(); }
+function newBoard(name){ return {id:uid8('b'),name:name||"Nouveau tableau",items:[],connections:[],view:{x:14,y:14,scale:1}}; }
+function seedBoard(b){
+  const mk=(type,o)=>{b.items.push({id:uid8('c'),type,x:o.x,y:o.y,w:o.w,h:o.h,z:++state2z(b),data:o.data});};
+  // pseudo-z without global state yet
+  let z=10; const push=(type,o)=>b.items.push({id:uid8('c'),type,x:o.x,y:o.y,w:o.w,h:o.h,z:++z,data:o.data});
+  const p1=uid8('c'),p2=uid8('c');
+  b.items.push({id:p1,type:'project',x:60,y:50,w:250,h:210,z:++z,data:{title:"Neige noire",status:0,desc:"Série 01 — HP5+ 400, Font-Romeu. Sélection 8/36."}});
+  b.items.push({id:p2,type:'project',x:380,y:60,w:250,h:210,z:++z,data:{title:"Hossegor 19h",status:2,desc:"Série 02 — UltraMax 400. 17 vues en ligne."}});
+  push('note',{x:700,y:60,w:230,h:150,data:{text:"Idée : pousser la Delta 3200 en intérieur, nuit, pour la série 04."}});
+  b.items.push({id:uid8('c'),type:'image',x:60,y:300,w:260,h:180,z:++z,data:{src:"images/img_3869.jpg",cap:"réf. lumière 19h"}});
+  push('link',{x:360,y:310,w:280,h:140,data:{title:"Labo de tirage",url:"https://"}});
+  b.connections.push({id:uid8('k'),from:p1,to:p2});
+}
+function state2z(){return 0;}
+
+/* ── store (local pour l'instant, prêt pour Firebase) ── */
+const Store={
+  load(){
+    try{
+      let raw=localStorage.getItem(KEY);
+      if(raw) return JSON.parse(raw);
+      const old=localStorage.getItem(OLDKEY);   // migration v1 → v2
+      if(old){ const o=JSON.parse(old); const b=newBoard("Tableau principal"); b.items=o.items||[]; return {boards:[b],activeBoard:b.id,gallery:[],z:o.z||50}; }
+    }catch(e){ memoryOnly=true; }
+    return null;
+  },
+  _t:null,
+  save(){
+    if(memoryOnly) return flagSaved();
+    clearTimeout(this._t);
+    this._t=setTimeout(()=>{
+      try{ localStorage.setItem(KEY,JSON.stringify(state)); flagSaved(); }
+      catch(e){
+        if(e&&(e.name==='QuotaExceededError'||/quota/i.test(e.message||''))){ flash("Mémoire pleine — la synchro Firebase lèvera cette limite."); document.getElementById('saved').textContent="mémoire pleine"; }
+        else { memoryOnly=true; flagSaved(); }
+      }
+    },350);
+  }
+};
+function save(){ persist(false); }
+/* ── sauvegarde Firestore splitée : état léger + images séparées ── */
+function stripImages(s){
+  // retourne un état sans les base64 (remplacées par leur id)
+  const copy=JSON.parse(JSON.stringify(s));
+  copy.boards.forEach(b=>b.items.forEach(it=>{
+    if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:')){
+      it.data._imgRef=it.id; it.data.src='__ref__';
     }
-  },350);
+  }));
+  copy.gallery=(copy.gallery||[]).map(g=>{
+    if(g.src&&g.src.startsWith('data:')) return {...g,src:'__ref__',_imgRef:g.id};
+    return g;
+  });
+  return copy;
 }
-function flagSaved(){
-  const s=document.getElementById('saved');
-  s.textContent = memoryOnly ? "session seule" : "enregistré";
-  if(!memoryOnly){ s.classList.add('flash'); setTimeout(()=>s.classList.remove('flash'),700); }
+async function saveImages(db,uid,s){
+  const col=db.collection('ateliers').doc(uid).collection('imgs');
+  const writes=[];
+  s.boards.forEach(b=>b.items.forEach(it=>{
+    if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:'))
+      writes.push({id:it.id,src:it.data.src});
+  }));
+  (s.gallery||[]).forEach(g=>{ if(g.src&&g.src.startsWith('data:')) writes.push({id:g.id,src:g.src}); });
+  await Promise.all(writes.map(w=>col.doc(w.id).set({src:w.src})));
+}
+async function loadImages(db,uid,s){
+  const col=db.collection('ateliers').doc(uid).collection('imgs');
+  // collect all refs
+  const refs=new Set();
+  s.boards.forEach(b=>b.items.forEach(it=>{ if(it.data&&it.data._imgRef)refs.add(it.data._imgRef); }));
+  (s.gallery||[]).forEach(g=>{ if(g._imgRef)refs.add(g._imgRef); });
+  if(!refs.size) return s;
+  const snaps=await Promise.all([...refs].map(id=>col.doc(id).get()));
+  const map={};
+  snaps.forEach(sn=>{ if(sn.exists)map[sn.id]=sn.data().src; });
+  s.boards.forEach(b=>b.items.forEach(it=>{ if(it.data&&it.data._imgRef&&map[it.data._imgRef]){ it.data.src=map[it.data._imgRef]; delete it.data._imgRef; } }));
+  (s.gallery||[]).forEach(g=>{ if(g._imgRef&&map[g._imgRef]){ g.src=map[g._imgRef]; delete g._imgRef; } });
+  return s;
 }
 
-/* ── plan / zoom ── */
-const viewport=document.getElementById('viewport');
-const canvas=document.getElementById('canvas');
-const CW=2800, CH=1900, MINS=0.35, MAXS=2.6;
+function persist(immediate){
+  if(USE_FB){
+    if(!fbDoc) return;
+    clearTimeout(saveT2);
+    const write=async()=>{
+      const db=firebase.firestore();
+      await saveImages(db,fbUser.uid,state);
+      const light=stripImages(state);
+      const json=JSON.stringify(light); lastJSON=json;
+      await fbDoc.set({json,ts:Date.now()});
+      flagSaved();
+    };
+    immediate?write().catch(e=>{ document.getElementById('saved').textContent="erreur synchro"; console.error(e); })
+              :(saveT2=setTimeout(()=>write().catch(e=>{ document.getElementById('saved').textContent="erreur synchro"; console.error(e); }),600));
+  } else { Store.save(); }
+}
+function isEditing(){ const a=document.activeElement; return a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.isContentEditable); }
+async function materialize(dataURL){ return dataURL; }  // option B : base64 direct dans Firestore
+function flagSaved(){ const s=document.getElementById('saved'); s.textContent=memoryOnly?"session seule":(USE_FB?"synchronisé":"enregistré"); if(!memoryOnly){s.classList.add('flash');setTimeout(()=>s.classList.remove('flash'),700);} }
+
+/* ── helpers ── */
+function B(){ return state.boards.find(b=>b.id===state.activeBoard)||state.boards[0]; }
+const CW=2800,CH=1900,MINS=0.35,MAXS=2.6;
+const viewport=document.getElementById('viewport'), canvas=document.getElementById('canvas'), svg=document.getElementById('links');
 let view={x:14,y:14,scale:1};
-function apply(){
-  canvas.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`;
-  document.getElementById('z-level').textContent=Math.round(view.scale*100)+'%';
-}
+function apply(){ canvas.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`; document.getElementById('z-level').textContent=Math.round(view.scale*100)+'%'; }
 function clampScale(s){return Math.max(MINS,Math.min(MAXS,s));}
-function zoomAt(px,py,factor){
-  const ns=clampScale(view.scale*factor), k=ns/view.scale;
-  view.x = px-(px-view.x)*k; view.y = py-(py-view.y)*k; view.scale=ns; apply();
-}
-function screenToCanvas(sx,sy){
-  const r=viewport.getBoundingClientRect();
-  return { x:(sx-r.left-view.x)/view.scale, y:(sy-r.top-view.y)/view.scale };
-}
-function fitView(){
-  // recadre pour montrer le coin haut-gauche du contenu
-  view={x:14,y:14,scale:1}; apply();
-}
+function zoomAt(px,py,f){ const ns=clampScale(view.scale*f),k=ns/view.scale; view.x=px-(px-view.x)*k; view.y=py-(py-view.y)*k; view.scale=ns; apply(); saveViewSoon(); }
+function screenToCanvas(sx,sy){ const r=viewport.getBoundingClientRect(); return {x:(sx-r.left-view.x)/view.scale,y:(sy-r.top-view.y)/view.scale}; }
+let svT; function saveViewSoon(){ clearTimeout(svT); svT=setTimeout(save,500); }
 
-/* ── interaction plan : pan 1 doigt / pinch 2 doigts / molette ── */
-const ptrs=new Map();
-function isInteractive(t){ return t.closest('.head,.rs,.del,.note-text,[contenteditable],input,button,a,.lk-go,.pr-status,.cap,img,figcaption'); }
-viewport.addEventListener('pointerdown',e=>{
-  if(isInteractive(e.target)) return;            // laisser cartes/champs gérer
-  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  viewport.setPointerCapture(e.pointerId);
-  if(ptrs.size===1) document.body.classList.add('panning');
+/* ── connexions ── */
+let connectMode=false, connectSource=null;
+function edgePoint(toward,R){ const cx=R.x+R.w/2,cy=R.y+R.h/2,dx=toward.x-cx,dy=toward.y-cy; if(!dx&&!dy)return{x:cx,y:cy}; const s=1/Math.max(Math.abs(dx)/(R.w/2),Math.abs(dy)/(R.h/2)); return{x:cx+dx*s,y:cy+dy*s}; }
+function drawLinks(){
+  const b=B(); const NS='http://www.w3.org/2000/svg';
+  svg.innerHTML='<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--link)"/></marker></defs>';
+  b.connections.forEach(cn=>{
+    const A=b.items.find(i=>i.id===cn.from), Z=b.items.find(i=>i.id===cn.to);
+    if(!A||!Z){ return; }
+    const ca={x:A.x+A.w/2,y:A.y+A.h/2}, cz={x:Z.x+Z.w/2,y:Z.y+Z.h/2};
+    const p1=edgePoint(cz,A), p2=edgePoint(ca,Z);
+    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const path=document.createElementNS(NS,'path');
+    path.setAttribute('class','wire'); path.setAttribute('marker-end','url(#arr)');
+    path.setAttribute('d',`M${p1.x},${p1.y} L${p2.x},${p2.y}`);
+    svg.appendChild(path);
+    const g=document.createElementNS(NS,'g'); g.setAttribute('class','killg'); g.setAttribute('transform',`translate(${mx},${my})`);
+    const c=document.createElementNS(NS,'circle'); c.setAttribute('r','11');
+    const t=document.createElementNS(NS,'text'); t.textContent='✕';
+    g.appendChild(c); g.appendChild(t);
+    g.addEventListener('click',ev=>{ ev.stopPropagation(); b.connections=b.connections.filter(x=>x.id!==cn.id); drawLinks(); save(); });
+    svg.appendChild(g);
+  });
+}
+function pickConnect(id){
+  const el=document.getElementById('c'+id);
+  if(connectSource==null){ connectSource=id; el&&el.classList.add('csel'); flash("Touche la 2ᵉ carte à relier"); }
+  else if(connectSource===id){ el&&el.classList.remove('csel'); connectSource=null; }
+  else {
+    const b=B();
+    if(!b.connections.some(k=>(k.from===connectSource&&k.to===id)||(k.from===id&&k.to===connectSource)))
+      b.connections.push({id:uid8('k'),from:connectSource,to:id});
+    const s=document.getElementById('c'+connectSource); s&&s.classList.remove('csel'); connectSource=null;
+    drawLinks(); save(); flash("Reliées ✓");
+  }
+}
+document.getElementById('connect-btn').addEventListener('click',function(){
+  connectMode=!connectMode; this.classList.toggle('on',connectMode); document.body.classList.toggle('connecting',connectMode);
+  if(!connectMode&&connectSource){ const s=document.getElementById('c'+connectSource); s&&s.classList.remove('csel'); connectSource=null; }
+  flash(connectMode?"Mode liaison : touche deux cartes":"Mode liaison désactivé");
 });
+
+/* ── pan / zoom ── */
+const ptrs=new Map();
+function isInteractive(t){ return t.closest('.head,.rs,.del,.note-text,[contenteditable],input,button,a,.lk-go,.pr-status,.cap,img,figcaption,.killg'); }
+viewport.addEventListener('pointerdown',e=>{ if(isInteractive(e.target))return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); viewport.setPointerCapture(e.pointerId); if(ptrs.size===1)document.body.classList.add('panning'); });
 viewport.addEventListener('pointermove',e=>{
-  if(!ptrs.has(e.pointerId)) return;
-  const prev=ptrs.get(e.pointerId);
-  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(ptrs.size===1){
-    view.x += e.clientX-prev.x; view.y += e.clientY-prev.y; apply();
-  } else if(ptrs.size===2){
-    const ids=[...ptrs.keys()];
-    const a=ptrs.get(ids[0]), b=ptrs.get(ids[1]);
-    const aPrev = ids[0]===e.pointerId?prev:a;
-    const bPrev = ids[1]===e.pointerId?prev:b;
-    const r=viewport.getBoundingClientRect();
-    const cur ={x:(a.x+b.x)/2-r.left, y:(a.y+b.y)/2-r.top};
-    const prv ={x:(aPrev.x+bPrev.x)/2-r.left, y:(aPrev.y+bPrev.y)/2-r.top};
-    const curD=Math.hypot(a.x-b.x,a.y-b.y), prvD=Math.hypot(aPrev.x-bPrev.x,aPrev.y-bPrev.y);
-    if(prvD>0) zoomAt(prv.x,prv.y,curD/prvD);
-    view.x += cur.x-prv.x; view.y += cur.y-prv.y; apply();
+  if(!ptrs.has(e.pointerId))return; const prev=ptrs.get(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){ view.x+=e.clientX-prev.x; view.y+=e.clientY-prev.y; apply(); }
+  else if(ptrs.size===2){
+    const ids=[...ptrs.keys()],a=ptrs.get(ids[0]),b2=ptrs.get(ids[1]);
+    const aP=ids[0]===e.pointerId?prev:a, bP=ids[1]===e.pointerId?prev:b2, r=viewport.getBoundingClientRect();
+    const cur={x:(a.x+b2.x)/2-r.left,y:(a.y+b2.y)/2-r.top}, prv={x:(aP.x+bP.x)/2-r.left,y:(aP.y+bP.y)/2-r.top};
+    const cD=Math.hypot(a.x-b2.x,a.y-b2.y), pD=Math.hypot(aP.x-bP.x,aP.y-bP.y);
+    if(pD>0)zoomAt(prv.x,prv.y,cD/pD); view.x+=cur.x-prv.x; view.y+=cur.y-prv.y; apply();
   }
 });
-function endPtr(e){ if(ptrs.has(e.pointerId)){ ptrs.delete(e.pointerId); } if(ptrs.size===0) document.body.classList.remove('panning'); }
-viewport.addEventListener('pointerup',endPtr);
-viewport.addEventListener('pointercancel',endPtr);
-viewport.addEventListener('pointerleave',endPtr);
-// molette / trackpad
-viewport.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const r=viewport.getBoundingClientRect();
-  const px=e.clientX-r.left, py=e.clientY-r.top;
-  if(e.ctrlKey){ zoomAt(px,py,Math.exp(-e.deltaY*0.01)); }      // pinch trackpad
-  else { zoomAt(px,py, e.deltaY<0?1.1:0.9); }                    // molette = zoom
-},{passive:false});
-// double-clic = zoom avant
+function endPtr(e){ if(ptrs.has(e.pointerId))ptrs.delete(e.pointerId); if(ptrs.size===0){document.body.classList.remove('panning');saveViewSoon();} }
+viewport.addEventListener('pointerup',endPtr); viewport.addEventListener('pointercancel',endPtr); viewport.addEventListener('pointerleave',endPtr);
+viewport.addEventListener('wheel',e=>{ e.preventDefault(); const r=viewport.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top; if(e.ctrlKey)zoomAt(px,py,Math.exp(-e.deltaY*0.01)); else zoomAt(px,py,e.deltaY<0?1.1:0.9); },{passive:false});
 viewport.addEventListener('dblclick',e=>{ if(isInteractive(e.target))return; const r=viewport.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,1.4); });
-// boutons
 document.getElementById('z-in').onclick=()=>zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,1.25);
 document.getElementById('z-out').onclick=()=>zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,0.8);
-document.getElementById('z-level').onclick=()=>{ const r=viewport.getBoundingClientRect(); zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,1/view.scale); };
-document.getElementById('z-fit').onclick=fitView;
-
-/* ── seed ── */
-function seed(){
-  state={items:[],z:1};
-  add('project',{x:60,y:50,w:250,h:210,data:{title:"Neige noire",status:0,desc:"Série 01 — HP5+ 400, Font-Romeu. Sélection finale 8/36. Tirages baryté à caler."}},true);
-  add('project',{x:340,y:50,w:250,h:210,data:{title:"Hossegor 19h",status:2,desc:"Série 02 — UltraMax 400. 17 vues en ligne. Penser à un mini-zine couleur."}},true);
-  add('project',{x:620,y:50,w:250,h:210,data:{title:"Petit inventaire",status:1,desc:"Série 03 — Portra 400, Canon AE-1. Shooting intérieurs à planifier."}},true);
-  add('note',{x:900,y:50,w:230,h:150,data:{text:"Idée : pousser la Delta 3200 en intérieur, nuit, lumière unique. Pour la série 04."}},true);
-  add('image',{x:60,y:300,w:260,h:180,data:{src:"images/img_3869.jpg",cap:"réf. lumière 19h"}},true);
-  add('link',{x:350,y:300,w:280,h:140,data:{title:"Labo de tirage",url:"https://"}},true);
-  add('note',{x:660,y:300,w:240,h:150,data:{text:"Inspiration : palette froide pour la montagne, chaude pour la côte. Garder le grain visible."}},true);
-  save();
-}
+document.getElementById('z-level').onclick=()=>zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,1/view.scale);
+document.getElementById('z-fit').onclick=()=>{ view.x=14;view.y=14;view.scale=1; B().view=view; apply(); save(); };
 
 /* ── cartes ── */
-let uid=Date.now();
 function add(type,opts={},silent=false){
-  let x=opts.x, y=opts.y, w=opts.w??defW(type), h=opts.h??defH(type);
+  const b=B(); let x=opts.x,y=opts.y,w=opts.w??defW(type),h=opts.h??defH(type);
   if(x===undefined){ const c=screenToCanvas(viewport.clientWidth/2,viewport.clientHeight/2); x=Math.max(0,c.x-w/2); y=Math.max(0,c.y-h/2); }
-  const it={id:++uid,type,x,y,w,h,z:++state.z,data:opts.data??defData(type)};
-  state.items.push(it); render(it); if(!silent) save(); return it;
+  const it={id:uid8('c'),type,x,y,w,h,z:++state.z,data:opts.data??defData(type)};
+  b.items.push(it); renderCard(it); drawLinks(); if(!silent)save(); return it;
 }
 function defW(t){return t==='note'?220:t==='image'?260:t==='link'?280:250;}
 function defH(t){return t==='note'?150:t==='image'?180:t==='link'?140:210;}
 function defData(t){ if(t==='note')return{text:""}; if(t==='image')return{src:"",cap:""}; if(t==='link')return{title:"",url:"https://"}; return{title:"",status:0,desc:""}; }
 
-function render(it){
-  let el=document.getElementById('c'+it.id); if(el) el.remove();
+function renderCard(it){
+  let el=document.getElementById('c'+it.id); if(el)el.remove();
   el=document.createElement('div'); el.className='card '+it.type; el.id='c'+it.id;
-  el.style.left=it.x+'px'; el.style.top=it.y+'px'; el.style.width=it.w+'px'; el.style.height=it.h+'px'; el.style.zIndex=it.z;
+  el.style.left=it.x+'px';el.style.top=it.y+'px';el.style.width=it.w+'px';el.style.height=it.h+'px';el.style.zIndex=it.z;
   const tag={note:'Note',image:'Image',link:'Lien',project:'Projet'}[it.type];
-  el.innerHTML=`<div class="head"><span class="tag">${tag}</span><span class="del" title="Supprimer">✕</span></div><div class="body"></div><div class="rs" title="Redimensionner"></div>`;
+  el.innerHTML=`<div class="head"><span class="tag">${tag}</span><span class="del">✕</span></div><div class="body"></div><div class="rs"></div>`;
   const body=el.querySelector('.body');
-
-  if(it.type==='note'){
-    const ta=document.createElement('textarea');ta.className='note-text';ta.placeholder='Écrire…';ta.value=it.data.text||"";
-    ta.addEventListener('input',()=>{it.data.text=ta.value;save();});
-    body.appendChild(ta);
-  } else if(it.type==='image'){ paintImage(it,body); }
+  if(it.type==='note'){ const ta=document.createElement('textarea');ta.className='note-text';ta.placeholder='Écrire…';ta.value=it.data.text||"";ta.addEventListener('input',()=>{it.data.text=ta.value;save();});body.appendChild(ta); }
+  else if(it.type==='image'){ paintImage(it,body); }
   else if(it.type==='link'){
-    const t=document.createElement('div');t.className='lk-title';t.contentEditable=true;t.textContent=it.data.title||"";
-    t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
+    const t=document.createElement('div');t.className='lk-title';t.contentEditable=true;t.textContent=it.data.title||"";t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
     const row=document.createElement('div');row.className='lk-url';
-    const inp=document.createElement('input');inp.value=it.data.url||"https://";inp.placeholder="https://";
-    inp.addEventListener('input',()=>{it.data.url=inp.value;save();});
-    const go=document.createElement('button');go.className='lk-go';go.textContent='↗';go.title='Ouvrir';
-    go.addEventListener('click',()=>{const u=it.data.url||"";if(/^https?:\/\/.+/.test(u))window.open(u,'_blank','noopener');else flash("Adresse incomplète");});
+    const inp=document.createElement('input');inp.value=it.data.url||"https://";inp.addEventListener('input',()=>{it.data.url=inp.value;save();});
+    const go=document.createElement('button');go.className='lk-go';go.textContent='↗';go.addEventListener('click',()=>{const u=it.data.url||"";/^https?:\/\/.+/.test(u)?window.open(u,'_blank','noopener'):flash("Adresse incomplète");});
     row.appendChild(inp);row.appendChild(go);body.appendChild(t);body.appendChild(row);
   } else if(it.type==='project'){
-    const t=document.createElement('div');t.className='pr-title';t.contentEditable=true;t.textContent=it.data.title||"";
-    t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
-    const st=document.createElement('div');st.className='pr-status';
-    const setSt=()=>{st.innerHTML='<span class="dotp"></span>'+STATUSES[it.data.status%STATUSES.length];};setSt();
+    const t=document.createElement('div');t.className='pr-title';t.contentEditable=true;t.textContent=it.data.title||"";t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
+    const st=document.createElement('div');st.className='pr-status';const setSt=()=>{st.innerHTML='<span class="dotp"></span>'+STATUSES[it.data.status%STATUSES.length];};setSt();
     st.addEventListener('click',()=>{it.data.status=(it.data.status+1)%STATUSES.length;setSt();save();});
-    const d=document.createElement('div');d.className='pr-desc';d.contentEditable=true;d.textContent=it.data.desc||"";
-    d.addEventListener('input',()=>{it.data.desc=d.textContent;save();});
+    const d=document.createElement('div');d.className='pr-desc';d.contentEditable=true;d.textContent=it.data.desc||"";d.addEventListener('input',()=>{it.data.desc=d.textContent;save();});
     body.appendChild(t);body.appendChild(st);body.appendChild(d);
   }
-
-  el.querySelector('.del').addEventListener('click',e=>{e.stopPropagation();state.items=state.items.filter(x=>x.id!==it.id);el.remove();save();});
+  el.querySelector('.del').addEventListener('click',e=>{ e.stopPropagation(); const b=B(); b.items=b.items.filter(x=>x.id!==it.id); b.connections=b.connections.filter(k=>k.from!==it.id&&k.to!==it.id); el.remove(); drawLinks(); save(); });
+  el.addEventListener('pointerdown',ev=>{ if(connectMode){ ev.stopPropagation(); ev.preventDefault(); pickConnect(it.id); } else { it.z=++state.z; el.style.zIndex=it.z; } },true);
   dragify(el,el.querySelector('.head'),it);
   resizify(el,el.querySelector('.rs'),it);
-  el.addEventListener('pointerdown',()=>{it.z=++state.z;el.style.zIndex=it.z;},true);
   canvas.appendChild(el);
 }
-
 function paintImage(it,body){
   body.innerHTML='';
-  if(it.data.src){
-    const img=document.createElement('img');img.src=it.data.src;img.alt=it.data.cap||"";img.draggable=false;body.appendChild(img);
-    if(it.data.cap){const c=document.createElement('div');c.className='cap';c.textContent=it.data.cap;body.appendChild(c);}
-  } else {
-    const e=document.createElement('div');e.className='empty';e.textContent='Choisir une image';body.appendChild(e);
-  }
-  body.onclick=ev=>{ if(ev.target.closest('.rs'))return; openPicker(it); };
+  if(it.data.src){ const img=document.createElement('img');img.src=it.data.src;img.alt=it.data.cap||"";img.draggable=false;body.appendChild(img); if(it.data.cap){const c=document.createElement('div');c.className='cap';c.textContent=it.data.cap;body.appendChild(c);} }
+  else { const e=document.createElement('div');e.className='empty';e.textContent='Choisir une image';body.appendChild(e); }
+  body.onclick=ev=>{ if(ev.target.closest('.rs')||connectMode)return; openPickerCard(it); };
 }
-
-/* ── drag (corrige l'échelle de zoom) ── */
 function dragify(el,handle,it){
   let sx,sy,ox,oy,drag=false;
-  handle.addEventListener('pointerdown',e=>{
-    if(e.target.classList.contains('del'))return;
-    e.stopPropagation(); drag=true; el.classList.add('grab');
-    sx=e.clientX;sy=e.clientY;ox=it.x;oy=it.y;it.z=++state.z;el.style.zIndex=it.z;
-    handle.setPointerCapture(e.pointerId);
-  });
-  handle.addEventListener('pointermove',e=>{
-    if(!drag)return;
-    it.x=Math.max(0,Math.min(CW-it.w, ox+(e.clientX-sx)/view.scale));
-    it.y=Math.max(0,Math.min(CH-it.h, oy+(e.clientY-sy)/view.scale));
-    el.style.left=it.x+'px';el.style.top=it.y+'px';
-  });
+  handle.addEventListener('pointerdown',e=>{ if(connectMode||e.target.classList.contains('del'))return; e.stopPropagation(); drag=true; el.classList.add('grab'); sx=e.clientX;sy=e.clientY;ox=it.x;oy=it.y;it.z=++state.z;el.style.zIndex=it.z; handle.setPointerCapture(e.pointerId); });
+  handle.addEventListener('pointermove',e=>{ if(!drag)return; it.x=Math.max(0,Math.min(CW-it.w,ox+(e.clientX-sx)/view.scale)); it.y=Math.max(0,Math.min(CH-it.h,oy+(e.clientY-sy)/view.scale)); el.style.left=it.x+'px';el.style.top=it.y+'px'; drawLinks(); });
   const end=()=>{ if(drag){drag=false;el.classList.remove('grab');save();} };
   handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
 }
 function resizify(el,h,it){
   let sx,sy,ow,oh,rs=false;
-  h.addEventListener('pointerdown',e=>{e.stopPropagation();rs=true;sx=e.clientX;sy=e.clientY;ow=it.w;oh=it.h;h.setPointerCapture(e.pointerId);});
-  h.addEventListener('pointermove',e=>{
-    if(!rs)return;
-    it.w=Math.max(150,ow+(e.clientX-sx)/view.scale);
-    it.h=Math.max(90,oh+(e.clientY-sy)/view.scale);
-    el.style.width=it.w+'px';el.style.height=it.h+'px';
-  });
+  h.addEventListener('pointerdown',e=>{ if(connectMode)return; e.stopPropagation();rs=true;sx=e.clientX;sy=e.clientY;ow=it.w;oh=it.h;h.setPointerCapture(e.pointerId); });
+  h.addEventListener('pointermove',e=>{ if(!rs)return; it.w=Math.max(150,ow+(e.clientX-sx)/view.scale); it.h=Math.max(90,oh+(e.clientY-sy)/view.scale); el.style.width=it.w+'px';el.style.height=it.h+'px'; drawLinks(); });
   const end=()=>{ if(rs){rs=false;save();} };
   h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
 }
 
-/* ── picker ── */
-let pickTarget=null; const picker=document.getElementById('picker');
-function buildPicker(){
-  const g=document.getElementById('pk-grid');g.innerHTML='';
-  SITE_IMAGES.forEach(([fn,cap])=>{
-    const f=document.createElement('figure');
-    f.innerHTML=`<img loading="lazy" src="images/${fn}" alt=""><figcaption>${cap}</figcaption>`;
-    f.addEventListener('click',()=>{ if(pickTarget){pickTarget.data.src="images/"+fn;pickTarget.data.cap=cap;render(pickTarget);save();} closePicker(); });
-    g.appendChild(f);
-  });
+/* ── rendu d'un tableau ── */
+function renderBoard(){
+  [...canvas.querySelectorAll('.card')].forEach(n=>n.remove());
+  view=B().view||(B().view={x:14,y:14,scale:1});
+  B().items.forEach(renderCard); drawLinks(); apply();
 }
-function openPicker(it){pickTarget=it;picker.classList.add('on');}
-function closePicker(){picker.classList.remove('on');pickTarget=null;document.getElementById('pk-input').value='';}
-document.getElementById('pk-close').addEventListener('click',closePicker);
-picker.addEventListener('click',e=>{if(e.target===picker)closePicker();});
-document.getElementById('pk-add').addEventListener('click',()=>{
-  const u=document.getElementById('pk-input').value.trim();
-  if(!/^https?:\/\/.+/.test(u))return flash("Adresse invalide");
-  if(pickTarget){pickTarget.data.src=u;pickTarget.data.cap="";render(pickTarget);save();}
-  closePicker();
-});
 
-/* ── téléversement depuis l'appareil (avec compression) ── */
-function fileToDataURL(file, maxDim=1400, quality=0.82){
-  return new Promise((res,rej)=>{
-    const url=URL.createObjectURL(file);
-    const img=new Image();
-    img.onload=()=>{
-      URL.revokeObjectURL(url);
-      let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
-      const m=Math.max(w,h);
-      if(m>maxDim){ const r=maxDim/m; w=Math.round(w*r); h=Math.round(h*r); }
-      const c=document.createElement('canvas'); c.width=w; c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      try{ res(c.toDataURL('image/jpeg',quality)); }catch(e){ rej(e); }
-    };
-    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('lecture impossible')); };
-    img.src=url;
+/* ── gestion des tableaux ── */
+const boardMenu=document.getElementById('board-menu');
+function renderBoardBar(){
+  document.getElementById('board-name').textContent=B().name;
+  boardMenu.innerHTML='';
+  state.boards.forEach(b=>{
+    const row=document.createElement('div'); row.className='bi'+(b.id===state.activeBoard?' cur':'');
+    row.innerHTML=`<span class="nm">${escapeHtml(b.name)}</span><span class="ops"><button class="op rn">✎</button><button class="op rm">🗑</button></span>`;
+    row.querySelector('.nm').addEventListener('click',()=>{ switchBoard(b.id); boardMenu.classList.remove('on'); });
+    row.querySelector('.rn').addEventListener('click',e=>{ e.stopPropagation(); const n=prompt("Nom du tableau",b.name); if(n&&n.trim()){b.name=n.trim();renderBoardBar();save();} });
+    row.querySelector('.rm').addEventListener('click',e=>{ e.stopPropagation(); if(state.boards.length<=1){flash("Garde au moins un tableau");return;} if(confirm("Supprimer le tableau « "+b.name+" » ?")){ const wasCur=b.id===state.activeBoard; state.boards=state.boards.filter(x=>x.id!==b.id); if(wasCur)state.activeBoard=state.boards[0].id; renderBoardBar();renderBoard();save(); } });
+    boardMenu.appendChild(row);
   });
+  const add=document.createElement('div'); add.className='add'; add.innerHTML='<span>+</span> Nouveau tableau';
+  add.addEventListener('click',()=>{ const b=newBoard("Tableau "+(state.boards.length+1)); state.boards.push(b); switchBoard(b.id); boardMenu.classList.remove('on'); save(); });
+  boardMenu.appendChild(add);
 }
+function switchBoard(id){ if(connectMode)document.getElementById('connect-btn').click(); state.activeBoard=id; renderBoardBar(); renderBoard(); save(); }
+document.getElementById('board-menu-btn').addEventListener('click',()=>boardMenu.classList.toggle('on'));
+document.getElementById('board-name').addEventListener('click',()=>boardMenu.classList.toggle('on'));
+document.addEventListener('click',e=>{ if(!e.target.closest('.boardsel'))boardMenu.classList.remove('on'); });
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{ const it=add(b.dataset.add); if(b.dataset.add==='image')openPickerCard(it); }));
+document.getElementById('clear-board').addEventListener('click',()=>{ if(confirm("Vider ce tableau ? (les autres tableaux et la galerie sont conservés)")){ const b=B(); b.items=[];b.connections=[]; renderBoard(); save(); } });
+
+/* ── onglets ── */
+function setTab(tab){
+  document.querySelectorAll('.tabbtn').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+  const boards=tab==='boards';
+  document.getElementById('subbar-boards').style.display=boards?'flex':'none';
+  document.getElementById('subbar-gallery').style.display=boards?'none':'flex';
+  viewport.style.display=boards?'block':'none';
+  document.getElementById('zoomctl').classList.toggle('hide',!boards);
+  document.getElementById('gallery').classList.toggle('on',!boards);
+  if(!boards)renderGallery();
+}
+document.querySelectorAll('.tabbtn').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
+
+/* ── galerie ── */
+const galEl=document.getElementById('gallery');
+function renderGallery(){
+  document.getElementById('gal-count').textContent=(state.gallery.length||0)+" image"+(state.gallery.length>1?"s":"");
+  if(!state.gallery.length){ galEl.innerHTML='<div class="gal-empty">Ta galerie est vide.<br>Ajoute des images depuis l\'appareil, les séries du site, ou une adresse.</div>'; return; }
+  const grid=document.createElement('div'); grid.className='gal-grid';
+  state.gallery.forEach((g,i)=>{
+    const fig=document.createElement('div'); fig.className='gal-item';
+    fig.innerHTML=`<img loading="lazy" src="${g.src}" alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
+    fig.querySelector('img').addEventListener('click',()=>openGlb(i));
+    fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation(); state.gallery=state.gallery.filter(x=>x.id!==g.id); renderGallery(); save(); });
+    grid.appendChild(fig);
+  });
+  galEl.innerHTML=''; galEl.appendChild(grid);
+}
+document.getElementById('gal-add').addEventListener('click',openPickerGallery);
+
+/* lightbox galerie */
+let glbI=0;
+function openGlb(i){ glbI=i; showGlb(); document.getElementById('glb').classList.add('on'); }
+function showGlb(){ const g=state.gallery[glbI]; if(!g)return; document.getElementById('glb-img').src=g.src; }
+function glbStep(d){ if(!state.gallery.length)return; glbI=(glbI+d+state.gallery.length)%state.gallery.length; showGlb(); }
+document.getElementById('glb-x').onclick=()=>document.getElementById('glb').classList.remove('on');
+document.getElementById('glb-prev').onclick=()=>glbStep(-1);
+document.getElementById('glb-next').onclick=()=>glbStep(1);
+document.getElementById('glb').addEventListener('click',e=>{ if(e.target.id==='glb')document.getElementById('glb').classList.remove('on'); });
+
+/* ── picker (cartes + galerie) ── */
+let pickMode='card', pickTarget=null;
+const picker=document.getElementById('picker');
+function buildPicker(){
+  const g=document.getElementById('pk-grid'); g.innerHTML='';
+  SITE_IMAGES.forEach(([fn,cap])=>{ const f=document.createElement('figure'); f.innerHTML=`<img loading="lazy" src="images/${fn}" alt=""><figcaption>${cap}</figcaption>`; f.addEventListener('click',()=>chooseImage("images/"+fn,cap)); g.appendChild(f); });
+}
+function openPickerCard(it){ pickMode='card'; pickTarget=it; document.getElementById('pk-title').textContent="Image de la carte"; picker.classList.add('on'); }
+function openPickerGallery(){ pickMode='gallery'; pickTarget=null; document.getElementById('pk-title').textContent="Ajouter à la galerie"; picker.classList.add('on'); }
+function closePicker(){ picker.classList.remove('on'); document.getElementById('pk-input').value=''; }
+function chooseImage(src,cap){
+  if(pickMode==='gallery'){ state.gallery.unshift({id:uid8('g'),src,cap:cap||""}); renderGallery(); save(); flash("Ajoutée à la galerie"); }
+  else if(pickTarget){ pickTarget.data.src=src; pickTarget.data.cap=cap||""; renderCard(pickTarget); drawLinks(); save(); }
+  closePicker();
+}
+document.getElementById('pk-close').addEventListener('click',closePicker);
+picker.addEventListener('click',e=>{ if(e.target===picker)closePicker(); });
+document.getElementById('pk-add').addEventListener('click',()=>{ const u=document.getElementById('pk-input').value.trim(); if(!/^https?:\/\/.+/.test(u))return flash("Adresse invalide"); chooseImage(u,""); });
+
+/* upload + compression */
+function fileToDataURL(file,maxDim=800,q=0.72){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file),img=new Image(); img.onload=()=>{ URL.revokeObjectURL(url); let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height,m=Math.max(w,h); if(m>maxDim){const r=maxDim/m;w=Math.round(w*r);h=Math.round(h*r);} const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h); try{res(c.toDataURL('image/jpeg',q));}catch(e){rej(e);} }; img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('x'));}; img.src=url; }); }
 async function handleFiles(list){
-  const files=[...list].filter(f=>f.type && f.type.startsWith('image/'));
-  if(!files.length){ flash("Aucune image reconnue"); return; }
+  const files=[...list].filter(f=>f.type&&f.type.startsWith('image/'));
+  if(!files.length){flash("Aucune image reconnue");return;}
   flash(files.length>1?`Import de ${files.length} photos…`:"Import en cours…");
-  let first=true, k=0;
+  let first=true,k=0;
   for(const f of files){
-    try{
-      const data=await fileToDataURL(f);
-      if(first && pickTarget){ pickTarget.data.src=data; pickTarget.data.cap=""; render(pickTarget); first=false; }
-      else { const it=add('image',{data:{src:data,cap:""}},true); it.x+=k*30; it.y+=k*30; render(it); }
+    try{ const data=await fileToDataURL(f); const src=await materialize(data);
+      if(pickMode==='gallery'){ state.gallery.unshift({id:uid8('g'),src,cap:""}); }
+      else if(first&&pickTarget){ pickTarget.data.src=src;pickTarget.data.cap="";renderCard(pickTarget);drawLinks();first=false; }
+      else { const it=add('image',{data:{src,cap:""}},true); it.x+=k*30;it.y+=k*30;renderCard(it); }
       k++;
     }catch(e){ flash("Une photo n'a pas pu être importée"); }
   }
-  save(); closePicker();
-  flash(files.length>1?`${files.length} photos importées`:"Photo importée");
+  if(pickMode==='gallery')renderGallery();
+  save(); closePicker(); flash(files.length>1?`${files.length} photos importées`:"Photo importée");
 }
 const pkFile=document.getElementById('pk-file');
 document.getElementById('pk-file-btn').addEventListener('click',()=>pkFile.click());
 pkFile.addEventListener('change',e=>{ handleFiles(e.target.files); e.target.value=""; });
 
-/* ── toolbar ── */
-document.querySelectorAll('[data-add]').forEach(b=>{
-  b.addEventListener('click',()=>{const it=add(b.dataset.add);if(b.dataset.add==='image')openPicker(it);});
-});
-document.getElementById('reset').addEventListener('click',()=>{
-  if(confirm("Vider entièrement le tableau ? Cette action est définitive.")){ canvas.innerHTML='';seed();renderAll();fitView();flash("Tableau réinitialisé"); }
-});
+/* ── divers ── */
+function flash(m){ const h=document.getElementById('hint'); h.textContent=m; h.classList.add('show'); clearTimeout(h._t); h._t=setTimeout(()=>h.classList.remove('show'),2200); }
 
-function renderAll(){canvas.innerHTML='';state.items.forEach(render);}
-function flash(msg){const h=document.getElementById('hint');h.textContent=msg;h.classList.add('show');clearTimeout(h._t);h._t=setTimeout(()=>h.classList.remove('show'),2200);}
+/* ── boot commun de l'UI ── */
+function flattenIds(){ const ids=[0]; if(state&&state.boards)state.boards.forEach(b=>{(b.items||[]).forEach(i=>pushNum(ids,i.id));(b.connections||[]).forEach(k=>pushNum(ids,k.id));}); if(state&&state.gallery)state.gallery.forEach(g=>pushNum(ids,g.id)); return ids; }
+function pushNum(arr,id){ const n=parseInt(String(id).replace(/^[a-z]/,''),36); if(!isNaN(n))arr.push(n); }
+function bootUI(){
+  uid=Math.max(uid, ...flattenIds());
+  renderBoardBar(); renderBoard(); buildPicker();
+  document.getElementById('app').classList.add('on'); flagSaved();
+}
+function rerenderAll(){ renderBoardBar(); renderBoard(); if(document.getElementById('gallery').classList.contains('on'))renderGallery(); }
 
-/* ── démarrage ── */
-function start(){
-  const had=load();
-  if(!had||!state.items||!state.items.length){ seed(); }
-  uid=Math.max(uid,...state.items.map(i=>i.id),0);
-  renderAll(); buildPicker(); apply();
-  document.getElementById('app').classList.add('on');
-  flagSaved();
-  setTimeout(()=>flash("Pince pour zoomer · glisse à un doigt pour te déplacer"),600);
+/* ── démarrage LOCAL (si pas de Firebase) ── */
+function startLocal(){
+  state=Store.load();
+  if(!state||!state.boards||!state.boards.length){ state=defaultState(); }
+  bootUI();
+  setTimeout(()=>flash("Pince pour zoomer · « Relier » pour tracer des flèches"),700);
+  window.addEventListener('storage',ev=>{ if(ev.key===KEY&&ev.newValue){ try{ state=JSON.parse(ev.newValue); rerenderAll(); }catch(e){} } });
+}
+
+/* ── démarrage FIREBASE (synchro multi-appareils) ── */
+async function startFB(){
+  const db=firebase.firestore();
+  fbDoc=db.collection('ateliers').doc(fbUser.uid);
+  try{
+    const snap=await fbDoc.get();
+    if(snap.exists && snap.data().json){
+      const db=firebase.firestore();
+      state=JSON.parse(snap.data().json);
+      state=await loadImages(db,fbUser.uid,state);
+      lastJSON=snap.data().json;
+    }
+    else { state=defaultState(); persist(true); }
+  }catch(e){ state=defaultState(); flash("Lecture impossible — vérifie les règles Firestore."); }
+  bootUI();
+  setTimeout(()=>flash("Synchronisé. Pince pour zoomer · « Relier » pour des flèches"),700);
+  fbDoc.onSnapshot(snap=>{
+    if(!snap.exists||snap.metadata.hasPendingWrites)return;
+    const j=snap.data().json; if(!j||j===lastJSON)return;
+    if(isEditing()){ lastJSON=j; return; }
+    lastJSON=j;
+    try{
+      const s=JSON.parse(j);
+      loadImages(firebase.firestore(),fbUser.uid,s).then(full=>{ state=full; rerenderAll(); });
+    }catch(e){}
+  });
 }
 
 /* ── gate ── */
-const gate=document.getElementById('gate');
+const gate=document.getElementById('gate'), gateEmail=document.getElementById('gate-email'),
+      gatePass=document.getElementById('gate-input'), gateErr=document.getElementById('gate-err');
+function fbErr(e){
+  const c=(e&&e.code)||'';
+  if(c.includes('wrong-password')||c.includes('invalid-credential'))return"Email ou mot de passe incorrect.";
+  if(c.includes('user-not-found'))return"Aucun compte avec cet email.";
+  if(c.includes('too-many-requests'))return"Trop de tentatives, réessaie plus tard.";
+  if(c.includes('network'))return"Pas de connexion.";
+  return"Connexion impossible.";
+}
 function tryEnter(){
-  const v=document.getElementById('gate-input').value;
-  if(v===PASS){ try{sessionStorage.setItem('atelier_ok','1');}catch(e){} gate.classList.add('hidden'); start(); }
-  else { document.getElementById('gate-err').textContent="Mot de passe incorrect."; document.getElementById('gate-input').value=""; }
+  if(USE_FB){
+    gateErr.textContent="Connexion…";
+    firebase.auth().signInWithEmailAndPassword(gateEmail.value.trim(),gatePass.value)
+      .catch(e=>{ gateErr.textContent=fbErr(e); gatePass.value=""; });
+  } else {
+    if(gatePass.value===PASS){ try{sessionStorage.setItem('atelier_ok','1');}catch(e){} gate.classList.add('hidden'); startLocal(); }
+    else { gateErr.textContent="Mot de passe incorrect."; gatePass.value=""; }
+  }
 }
 document.getElementById('gate-btn').addEventListener('click',tryEnter);
-document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryEnter();});
-try{ if(sessionStorage.getItem('atelier_ok')==='1'){ gate.classList.add('hidden'); start(); } else { document.getElementById('gate-input').focus(); } }
-catch(e){ document.getElementById('gate-input').focus(); }
+gatePass.addEventListener('keydown',e=>{ if(e.key==='Enter')tryEnter(); });
+gateEmail.addEventListener('keydown',e=>{ if(e.key==='Enter')gatePass.focus(); });
+
+if(USE_FB){
+  gateEmail.style.display='block';
+  document.getElementById('gate-sub').textContent="Connecte-toi pour retrouver ton atelier synchronisé.";
+  document.getElementById('logout').style.display='inline';
+  document.getElementById('logout').addEventListener('click',e=>{ e.preventDefault(); firebase.auth().signOut(); });
+  if(!window.firebase){ gateErr.textContent="Firebase n'a pas pu se charger (connexion ?)."; }
+  else {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    let booted=false;
+    firebase.auth().onAuthStateChanged(u=>{
+      if(u){ fbUser=u; gate.classList.add('hidden'); if(!booted){booted=true;startFB();} }
+      else { fbUser=null; gate.classList.remove('hidden'); gateEmail.focus(); }
+    });
+  }
+} else {
+  try{ if(sessionStorage.getItem('atelier_ok')==='1'){ gate.classList.add('hidden'); startLocal(); } else gatePass.focus(); }
+  catch(e){ gatePass.focus(); }
+}
 </script>
 </body>
 </html>
