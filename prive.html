@@ -150,10 +150,10 @@ body.connecting .card{cursor:crosshair}
 #zoomctl.hide{display:none}
 
 /* GALLERY */
-#gallery{flex:1 1 auto;overflow:auto;display:none;padding:clamp(16px,3vw,30px);padding-bottom:calc(40px + var(--safe-b));-webkit-overflow-scrolling:touch}
-#gallery.on{display:block}
+#gallery{flex:1 1 auto;overflow:auto;display:none;padding:0;padding-bottom:calc(40px + var(--safe-b));-webkit-overflow-scrolling:touch}
+#gallery.on{display:flex;flex-direction:column}
 .gal-empty{color:var(--ash);text-align:center;padding:60px 20px;line-height:1.7}
-.gal-grid{columns:3;column-gap:14px}
+.gal-grid{columns:3;column-gap:14px;padding:clamp(16px,3vw,30px)}
 @media(max-width:900px){.gal-grid{columns:2}}
 @media(max-width:560px){.gal-grid{columns:1}}
 .gal-item{break-inside:avoid;margin:0 0 14px;position:relative;background:var(--mat);padding:8px;box-shadow:0 1px 0 var(--hair),0 16px 36px -32px rgba(0,0,0,.5);cursor:zoom-in}
@@ -162,6 +162,21 @@ body.connecting .card{cursor:crosshair}
 .gal-item .gdel{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(244,244,241,.92);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:14px;opacity:0;transition:opacity .2s}
 .gal-item:hover .gdel{opacity:1}
 @media(hover:none){.gal-item .gdel{opacity:1}}
+/* sélecteur album (reprend le style boardsel) */
+.albumsel{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--hair);background:var(--mat);border-radius:2px;padding:0 4px 0 12px;position:relative}
+.albumsel .an{font-family:var(--disp);font-size:16px;font-weight:300;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 0}
+.albumsel .cv{padding:8px;color:var(--ash);font-size:11px}
+.amenu{position:absolute;top:calc(100% + 6px);left:0;min-width:220px;background:var(--mat);border:1px solid var(--hair);box-shadow:0 24px 50px -30px rgba(0,0,0,.5);z-index:60;display:none;max-height:60vh;overflow:auto}
+.amenu.on{display:block}
+.amenu .ai{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--hair)}
+.amenu .ai:active{background:var(--tab)}
+.amenu .ai .nm{font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.amenu .ai.cur .nm{font-weight:600}
+.amenu .ai .ops{display:flex;gap:4px}
+.amenu .ai .op{width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:var(--ash);font-size:13px;border-radius:50%}
+.amenu .ai .op:active{background:rgba(0,0,0,.06);color:var(--ink)}
+.amenu .add{padding:12px 14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:8px}
+.amenu .add:active{background:var(--tab)}
 
 /* PICKER */
 #picker{position:fixed;inset:0;z-index:500;background:rgba(25,24,20,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
@@ -252,8 +267,13 @@ body.connecting .card{cursor:crosshair}
 
   <!-- sous-barre GALERIE -->
   <div class="subbar" id="subbar-gallery" style="display:none">
-    <button class="tool" id="gal-add"><span class="plus">+</span> Ajouter des images</button>
+    <div class="albumsel">
+      <span class="an" id="album-name">Album</span>
+      <button class="cv" id="album-menu-btn">▼</button>
+      <div class="amenu" id="album-menu"></div>
+    </div>
     <span class="spacer"></span>
+    <button class="tool" id="gal-add"><span class="plus">+</span> Ajouter</button>
     <span class="label" id="gal-count"></span>
   </div>
 
@@ -343,9 +363,16 @@ function uid8(p){return (p||'')+(++uid).toString(36);}
 function defaultState(){
   const b=newBoard("Tableau principal");
   seedBoard(b);
-  return { boards:[b], activeBoard:b.id, gallery:[], z:50 };
+  return { boards:[b], activeBoard:b.id, albums:[newAlbum("Pellicule")], activeAlbum:null, z:50 };
 }
 function newBoard(name){ return {id:uid8('b'),name:name||"Nouveau tableau",items:[],connections:[],view:{x:14,y:14,scale:1}}; }
+function newAlbum(name){ return {id:uid8('a'),name:name||"Nouvel album",images:[]}; }
+function activeAlbumObj(){ return (state.albums||[]).find(a=>a.id===state.activeAlbum)||(state.albums||[])[0]; }
+function ensureAlbums(){
+  if(!state.albums||!state.albums.length){ state.albums=[newAlbum("Pellicule")]; }
+  if(!state.activeAlbum||(state.albums||[]).every(a=>a.id!==state.activeAlbum)) state.activeAlbum=(state.albums[0]||{}).id;
+  if(state.gallery&&state.gallery.length&&!state.albums[0].images.length){ state.albums[0].images=state.gallery; delete state.gallery; }
+}
 function seedBoard(b){
   const mk=(type,o)=>{b.items.push({id:uid8('c'),type,x:o.x,y:o.y,w:o.w,h:o.h,z:++state2z(b),data:o.data});};
   // pseudo-z without global state yet
@@ -367,7 +394,7 @@ const Store={
       let raw=localStorage.getItem(KEY);
       if(raw) return JSON.parse(raw);
       const old=localStorage.getItem(OLDKEY);   // migration v1 → v2
-      if(old){ const o=JSON.parse(old); const b=newBoard("Tableau principal"); b.items=o.items||[]; return {boards:[b],activeBoard:b.id,gallery:[],z:o.z||50}; }
+      if(old){ const o=JSON.parse(old); const b=newBoard("Tableau principal"); b.items=o.items||[]; const al=newAlbum("Pellicule"); al.images=o.gallery||[]; return {boards:[b],activeBoard:b.id,albums:[al],activeAlbum:al.id,z:o.z||50}; }
     }catch(e){ memoryOnly=true; }
     return null;
   },
@@ -387,41 +414,27 @@ const Store={
 function save(){ persist(false); }
 /* ── sauvegarde Firestore splitée : état léger + images séparées ── */
 function stripImages(s){
-  // retourne un état sans les base64 (remplacées par leur id)
   const copy=JSON.parse(JSON.stringify(s));
-  copy.boards.forEach(b=>b.items.forEach(it=>{
-    if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:')){
-      it.data._imgRef=it.id; it.data.src='__ref__';
-    }
-  }));
-  copy.gallery=(copy.gallery||[]).map(g=>{
-    if(g.src&&g.src.startsWith('data:')) return {...g,src:'__ref__',_imgRef:g.id};
-    return g;
-  });
+  copy.boards.forEach(b=>b.items.forEach(it=>{ if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:')){ it.data._imgRef=it.id; it.data.src='__ref__'; } }));
+  (copy.albums||[]).forEach(al=>{ al.images=(al.images||[]).map(g=>{ if(g.src&&g.src.startsWith('data:'))return{...g,src:'__ref__',_imgRef:g.id}; return g; }); });
   return copy;
 }
 async function saveImages(db,uid,s){
-  const col=db.collection('ateliers').doc(uid).collection('imgs');
-  const writes=[];
-  s.boards.forEach(b=>b.items.forEach(it=>{
-    if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:'))
-      writes.push({id:it.id,src:it.data.src});
-  }));
-  (s.gallery||[]).forEach(g=>{ if(g.src&&g.src.startsWith('data:')) writes.push({id:g.id,src:g.src}); });
+  const col=db.collection('ateliers').doc(uid).collection('imgs'); const writes=[];
+  s.boards.forEach(b=>b.items.forEach(it=>{ if(it.type==='image'&&it.data.src&&it.data.src.startsWith('data:')) writes.push({id:it.id,src:it.data.src}); }));
+  (s.albums||[]).forEach(al=>(al.images||[]).forEach(g=>{ if(g.src&&g.src.startsWith('data:'))writes.push({id:g.id,src:g.src}); }));
   await Promise.all(writes.map(w=>col.doc(w.id).set({src:w.src})));
 }
 async function loadImages(db,uid,s){
   const col=db.collection('ateliers').doc(uid).collection('imgs');
-  // collect all refs
   const refs=new Set();
   s.boards.forEach(b=>b.items.forEach(it=>{ if(it.data&&it.data._imgRef)refs.add(it.data._imgRef); }));
-  (s.gallery||[]).forEach(g=>{ if(g._imgRef)refs.add(g._imgRef); });
-  if(!refs.size) return s;
+  (s.albums||[]).forEach(al=>(al.images||[]).forEach(g=>{ if(g._imgRef)refs.add(g._imgRef); }));
+  if(!refs.size)return s;
   const snaps=await Promise.all([...refs].map(id=>col.doc(id).get()));
-  const map={};
-  snaps.forEach(sn=>{ if(sn.exists)map[sn.id]=sn.data().src; });
+  const map={}; snaps.forEach(sn=>{ if(sn.exists)map[sn.id]=sn.data().src; });
   s.boards.forEach(b=>b.items.forEach(it=>{ if(it.data&&it.data._imgRef&&map[it.data._imgRef]){ it.data.src=map[it.data._imgRef]; delete it.data._imgRef; } }));
-  (s.gallery||[]).forEach(g=>{ if(g._imgRef&&map[g._imgRef]){ g.src=map[g._imgRef]; delete g._imgRef; } });
+  (s.albums||[]).forEach(al=>{ al.images=(al.images||[]).map(g=>{ if(g._imgRef&&map[g._imgRef]){ const{_imgRef,...rest}=g; return{...rest,src:map[_imgRef]}; } return g; }); });
   return s;
 }
 
@@ -628,28 +641,51 @@ function setTab(tab){
 }
 document.querySelectorAll('.tabbtn').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
 
-/* ── galerie ── */
+/* ── albums ── */
 const galEl=document.getElementById('gallery');
+const albumMenu=document.getElementById('album-menu');
+function renderAlbumBar(){
+  const al=activeAlbumObj(); if(!al)return;
+  document.getElementById('album-name').textContent=al.name;
+  albumMenu.innerHTML='';
+  (state.albums||[]).forEach(a=>{
+    const row=document.createElement('div'); row.className='ai'+(a.id===state.activeAlbum?' cur':'');
+    row.innerHTML=`<span class="nm">${escapeHtml(a.name)}</span><span class="ops"><button class="op rn">✎</button><button class="op rm">🗑</button></span>`;
+    row.querySelector('.nm').addEventListener('click',()=>{ state.activeAlbum=a.id; renderAlbumBar(); renderGallery(); albumMenu.classList.remove('on'); });
+    row.querySelector('.rn').addEventListener('click',e=>{ e.stopPropagation(); const n=prompt("Nom de l'album",a.name); if(n&&n.trim()){a.name=n.trim();renderAlbumBar();save();} });
+    row.querySelector('.rm').addEventListener('click',e=>{ e.stopPropagation(); if(state.albums.length<=1){flash("Garde au moins un album");return;} if(confirm("Supprimer l'album « "+a.name+" » et ses images ?")){ const wasCur=a.id===state.activeAlbum; state.albums=state.albums.filter(x=>x.id!==a.id); if(wasCur)state.activeAlbum=state.albums[0].id; renderAlbumBar();renderGallery();save(); } });
+    albumMenu.appendChild(row);
+  });
+  const addRow=document.createElement('div'); addRow.className='add'; addRow.innerHTML='<span>+</span> Nouvel album';
+  addRow.addEventListener('click',()=>{ const a=newAlbum("Album "+(state.albums.length+1)); state.albums.push(a); state.activeAlbum=a.id; renderAlbumBar();renderGallery();albumMenu.classList.remove('on');save(); });
+  albumMenu.appendChild(addRow);
+}
+document.getElementById('album-menu-btn').addEventListener('click',()=>albumMenu.classList.toggle('on'));
+document.getElementById('album-name').addEventListener('click',()=>albumMenu.classList.toggle('on'));
+document.addEventListener('click',e=>{ if(!e.target.closest('.albumsel'))albumMenu.classList.remove('on'); });
+
 function renderGallery(){
-  document.getElementById('gal-count').textContent=(state.gallery.length||0)+" image"+(state.gallery.length>1?"s":"");
-  if(!state.gallery.length){ galEl.innerHTML='<div class="gal-empty">Ta galerie est vide.<br>Ajoute des images depuis l\'appareil, les séries du site, ou une adresse.</div>'; return; }
+  const al=activeAlbumObj(); const imgs=al?al.images||[]:[];
+  document.getElementById('gal-count').textContent=imgs.length+" image"+(imgs.length!==1?"s":"");
+  galEl.innerHTML='';
+  if(!imgs.length){ galEl.innerHTML='<div class="gal-empty">Album vide.<br>Ajoute des images depuis l\'appareil, les séries du site, ou une adresse.</div>'; return; }
   const grid=document.createElement('div'); grid.className='gal-grid';
-  state.gallery.forEach((g,i)=>{
+  imgs.forEach((g,i)=>{
     const fig=document.createElement('div'); fig.className='gal-item';
     fig.innerHTML=`<img loading="lazy" src="${g.src}" alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
     fig.querySelector('img').addEventListener('click',()=>openGlb(i));
-    fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation(); state.gallery=state.gallery.filter(x=>x.id!==g.id); renderGallery(); save(); });
+    fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation(); al.images=al.images.filter(x=>x.id!==g.id); renderGallery(); save(); });
     grid.appendChild(fig);
   });
-  galEl.innerHTML=''; galEl.appendChild(grid);
+  galEl.appendChild(grid);
 }
 document.getElementById('gal-add').addEventListener('click',openPickerGallery);
 
 /* lightbox galerie */
 let glbI=0;
 function openGlb(i){ glbI=i; showGlb(); document.getElementById('glb').classList.add('on'); }
-function showGlb(){ const g=state.gallery[glbI]; if(!g)return; document.getElementById('glb-img').src=g.src; }
-function glbStep(d){ if(!state.gallery.length)return; glbI=(glbI+d+state.gallery.length)%state.gallery.length; showGlb(); }
+function showGlb(){ const al=activeAlbumObj(); const g=(al&&al.images||[])[glbI]; if(!g)return; document.getElementById('glb-img').src=g.src; }
+function glbStep(d){ const al=activeAlbumObj(); const n=(al&&al.images||[]).length; if(!n)return; glbI=(glbI+d+n)%n; showGlb(); }
 document.getElementById('glb-x').onclick=()=>document.getElementById('glb').classList.remove('on');
 document.getElementById('glb-prev').onclick=()=>glbStep(-1);
 document.getElementById('glb-next').onclick=()=>glbStep(1);
@@ -663,10 +699,10 @@ function buildPicker(){
   SITE_IMAGES.forEach(([fn,cap])=>{ const f=document.createElement('figure'); f.innerHTML=`<img loading="lazy" src="images/${fn}" alt=""><figcaption>${cap}</figcaption>`; f.addEventListener('click',()=>chooseImage("images/"+fn,cap)); g.appendChild(f); });
 }
 function openPickerCard(it){ pickMode='card'; pickTarget=it; document.getElementById('pk-title').textContent="Image de la carte"; picker.classList.add('on'); }
-function openPickerGallery(){ pickMode='gallery'; pickTarget=null; document.getElementById('pk-title').textContent="Ajouter à la galerie"; picker.classList.add('on'); }
+function openPickerGallery(){ pickMode='gallery'; pickTarget=null; document.getElementById('pk-title').textContent="Ajouter à l'album"; picker.classList.add('on'); }
 function closePicker(){ picker.classList.remove('on'); document.getElementById('pk-input').value=''; }
 function chooseImage(src,cap){
-  if(pickMode==='gallery'){ state.gallery.unshift({id:uid8('g'),src,cap:cap||""}); renderGallery(); save(); flash("Ajoutée à la galerie"); }
+  if(pickMode==='gallery'){ const al=activeAlbumObj(); if(al){ al.images=al.images||[]; al.images.unshift({id:uid8('g'),src,cap:cap||""}); renderGallery(); save(); flash("Ajoutée à l'album"); } }
   else if(pickTarget){ pickTarget.data.src=src; pickTarget.data.cap=cap||""; renderCard(pickTarget); drawLinks(); save(); }
   closePicker();
 }
@@ -683,7 +719,7 @@ async function handleFiles(list){
   let first=true,k=0;
   for(const f of files){
     try{ const data=await fileToDataURL(f); const src=await materialize(data);
-      if(pickMode==='gallery'){ state.gallery.unshift({id:uid8('g'),src,cap:""}); }
+      if(pickMode==='gallery'){ const al=activeAlbumObj(); if(al){ al.images=al.images||[]; al.images.unshift({id:uid8('g'),src,cap:""}); } }
       else if(first&&pickTarget){ pickTarget.data.src=src;pickTarget.data.cap="";renderCard(pickTarget);drawLinks();first=false; }
       else { const it=add('image',{data:{src,cap:""}},true); it.x+=k*30;it.y+=k*30;renderCard(it); }
       k++;
@@ -700,14 +736,15 @@ pkFile.addEventListener('change',e=>{ handleFiles(e.target.files); e.target.valu
 function flash(m){ const h=document.getElementById('hint'); h.textContent=m; h.classList.add('show'); clearTimeout(h._t); h._t=setTimeout(()=>h.classList.remove('show'),2200); }
 
 /* ── boot commun de l'UI ── */
-function flattenIds(){ const ids=[0]; if(state&&state.boards)state.boards.forEach(b=>{(b.items||[]).forEach(i=>pushNum(ids,i.id));(b.connections||[]).forEach(k=>pushNum(ids,k.id));}); if(state&&state.gallery)state.gallery.forEach(g=>pushNum(ids,g.id)); return ids; }
+function flattenIds(){ const ids=[0]; if(state&&state.boards)state.boards.forEach(b=>{(b.items||[]).forEach(i=>pushNum(ids,i.id));(b.connections||[]).forEach(k=>pushNum(ids,k.id));}); if(state&&state.albums)state.albums.forEach(a=>(a.images||[]).forEach(g=>pushNum(ids,g.id))); return ids; }
 function pushNum(arr,id){ const n=parseInt(String(id).replace(/^[a-z]/,''),36); if(!isNaN(n))arr.push(n); }
 function bootUI(){
   uid=Math.max(uid, ...flattenIds());
-  renderBoardBar(); renderBoard(); buildPicker();
+  ensureAlbums();
+  renderBoardBar(); renderBoard(); renderAlbumBar(); buildPicker();
   document.getElementById('app').classList.add('on'); flagSaved();
 }
-function rerenderAll(){ renderBoardBar(); renderBoard(); if(document.getElementById('gallery').classList.contains('on'))renderGallery(); }
+function rerenderAll(){ ensureAlbums(); renderBoardBar(); renderBoard(); renderAlbumBar(); if(document.getElementById('gallery').classList.contains('on'))renderGallery(); }
 
 /* ── démarrage LOCAL (si pas de Firebase) ── */
 function startLocal(){
