@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f4f4f1">
 <meta name="robots" content="noindex,nofollow">
 <title>Atelier — privé</title>
@@ -16,14 +16,19 @@
   --hair:#e2e2dc; --mat:#ffffff;
   --disp:'Newsreader',Georgia,serif; --ui:'Inter',system-ui,sans-serif;
   --ease:cubic-bezier(.2,.7,.2,1);
-  --note:#fcf9ef;        /* papier note, chaud */
-  --tab:#eceae3;
+  --note:#fcf9ef; --tab:#eceae3;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
 }
-html,body{height:100%}
-body{background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:14px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ash)}
 ::selection{background:var(--ink);color:var(--paper)}
+body.panning{cursor:grabbing}
+body.panning *{user-select:none!important}
 
 /* ── GATE ── */
 #gate{position:fixed;inset:0;z-index:1000;background:var(--paper);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;transition:opacity .5s,visibility .5s}
@@ -34,61 +39,61 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .gate-card h1 em{font-style:italic}
 .gate-card p{color:var(--ash);margin-bottom:30px;line-height:1.6}
 .gate-row{display:flex;border:1px solid var(--hair);background:var(--mat)}
-.gate-row input{flex:1;border:none;background:none;padding:15px 16px;font-family:var(--ui);font-size:15px;color:var(--ink);outline:none;letter-spacing:.04em}
+.gate-row input{flex:1;border:none;background:none;padding:15px 16px;font-family:var(--ui);font-size:16px;color:var(--ink);outline:none;letter-spacing:.04em}
 .gate-row button{padding:0 22px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.18em;text-transform:uppercase;transition:opacity .2s}
-.gate-row button:hover{opacity:.85}
+.gate-row button:active{opacity:.7}
 #gate-err{color:#b4453a;font-size:12px;margin-top:12px;height:14px;letter-spacing:.02em}
-.gate-foot{position:fixed;bottom:26px;left:0;right:0;text-align:center}
+.gate-foot{position:fixed;bottom:calc(26px + var(--safe-b));left:0;right:0;text-align:center}
 .gate-foot a{color:var(--ash);text-decoration:none}
-.gate-foot a:hover{color:var(--ink)}
 
 /* ── APP ── */
 #app{height:100%;display:flex;flex-direction:column;opacity:0;transition:opacity .5s}
 #app.on{opacity:1}
 
-.bar{flex:0 0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 clamp(16px,3vw,28px);border-bottom:1px solid var(--hair);background:rgba(244,244,241,.9);backdrop-filter:blur(8px);z-index:20}
-.bar .who{display:flex;align-items:baseline;gap:12px;min-width:0}
+.bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px clamp(12px,3vw,28px);padding-top:calc(8px + var(--safe-t));
+  padding-left:calc(clamp(12px,3vw,28px) + var(--safe-l));padding-right:calc(clamp(12px,3vw,28px) + var(--safe-r));
+  border-bottom:1px solid var(--hair);background:rgba(244,244,241,.92);backdrop-filter:blur(8px);z-index:20}
+.bar .who{display:flex;align-items:baseline;gap:12px;min-width:0;flex:0 0 auto}
 .bar .who b{font-family:var(--disp);font-weight:300;font-size:22px}
 .bar .who .label{white-space:nowrap}
-.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.tool{border:1px solid var(--hair);background:var(--mat);padding:9px 13px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,background .2s}
-.tool:hover{border-color:var(--ink)}
-.tool .plus{font-size:14px;line-height:1}
+.tools{display:flex;gap:7px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px}
+.tools::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto;border:1px solid var(--hair);background:var(--mat);padding:10px 13px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s;white-space:nowrap}
+.tool:active{border-color:var(--ink)}
+@media(hover:hover){.tool:hover{border-color:var(--ink)}}
+.tool .plus{font-size:15px;line-height:1}
 .tool.ghost{border-color:transparent;color:var(--ash)}
-.tool.ghost:hover{color:var(--ink)}
-.saved{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.saved{flex:0 0 auto;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);white-space:nowrap;padding-left:4px}
 .saved.flash{color:var(--ink)}
 
-/* ── CANVAS ── */
-#scroll{flex:1 1 auto;overflow:auto;position:relative}
-#canvas{position:relative;width:2800px;height:1900px;
-  background-image:radial-gradient(var(--hair) 1.1px,transparent 1.1px);
-  background-size:30px 30px;background-position:-1px -1px;}
+/* ── VIEWPORT + CANVAS (zoomable) ── */
+#viewport{flex:1 1 auto;position:relative;overflow:hidden;touch-action:none;overscroll-behavior:none;background:var(--paper)}
+#canvas{position:absolute;top:0;left:0;width:2800px;height:1900px;transform-origin:0 0;will-change:transform;
+  background-image:radial-gradient(var(--hair) 1.2px,transparent 1.2px);background-size:32px 32px;background-position:-1px -1px}
 
 /* ── CARD ── */
 .card{position:absolute;background:var(--mat);border:1px solid var(--hair);
   box-shadow:0 1px 0 rgba(0,0,0,.02),0 18px 40px -32px rgba(0,0,0,.5);
-  display:flex;flex-direction:column;min-width:150px;min-height:90px;}
-.card.grab{box-shadow:0 1px 0 rgba(0,0,0,.02),0 30px 60px -28px rgba(0,0,0,.55);}
-.card .head{flex:0 0 auto;height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:grab;border-bottom:1px solid var(--hair);background:var(--tab);touch-action:none}
+  display:flex;flex-direction:column;min-width:150px;min-height:90px}
+.card.grab{box-shadow:0 1px 0 rgba(0,0,0,.02),0 32px 60px -26px rgba(0,0,0,.55);z-index:999!important}
+.card .head{flex:0 0 auto;height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 10px;cursor:grab;border-bottom:1px solid var(--hair);background:var(--tab);touch-action:none;user-select:none}
 .card.grab .head{cursor:grabbing}
 .card .head .tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
-.card .head .del{font-size:13px;color:var(--faint);width:18px;height:18px;line-height:16px;text-align:center;border-radius:50%}
-.card .head .del:hover{color:#b4453a}
+.card .head .del{font-size:15px;color:var(--faint);width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;flex:0 0 auto}
+.card .head .del:active{color:#b4453a;background:rgba(0,0,0,.05)}
+@media(hover:hover){.card .head .del:hover{color:#b4453a}}
 .card .body{flex:1 1 auto;overflow:hidden;position:relative;display:flex;flex-direction:column}
-.card .rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;touch-action:none;
-  background:linear-gradient(135deg,transparent 50%,var(--faint) 50%,var(--faint) 60%,transparent 60%,transparent 72%,var(--faint) 72%,var(--faint) 82%,transparent 82%);opacity:.6}
+.card .rs{position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:nwse-resize;touch-action:none;
+  background:linear-gradient(135deg,transparent 52%,var(--faint) 52%,var(--faint) 60%,transparent 60%,transparent 72%,var(--faint) 72%,var(--faint) 80%,transparent 80%);opacity:.7}
 
 /* note */
 .card.note{background:var(--note)}
 .card.note .head{background:#f3efe2}
-.card.note .body{padding:0}
-.card .note-text{flex:1;width:100%;border:none;background:none;resize:none;outline:none;
-  font-family:var(--ui);font-size:14px;line-height:1.55;color:var(--ink);padding:12px 14px;letter-spacing:.005em}
+.card .note-text{flex:1;width:100%;border:none;background:none;resize:none;outline:none;font-family:var(--ui);font-size:14px;line-height:1.55;color:var(--ink);padding:12px 14px;letter-spacing:.005em}
 .card .note-text::placeholder{color:var(--faint)}
 
 /* image */
-.card.image .body{cursor:default}
 .card.image img{width:100%;height:100%;object-fit:cover;display:block}
 .card.image .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--ash);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:repeating-linear-gradient(45deg,transparent,transparent 9px,rgba(0,0,0,.02) 9px,rgba(0,0,0,.02) 10px)}
 .card.image .cap{position:absolute;left:0;right:0;bottom:0;padding:7px 10px;background:linear-gradient(to top,rgba(0,0,0,.55),transparent);color:#fff;font-size:10px;letter-spacing:.08em}
@@ -98,19 +103,27 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .card .lk-title{font-family:var(--disp);font-size:18px;font-weight:300;line-height:1.2;outline:none;margin-bottom:8px}
 .card .lk-title:empty::before{content:'Titre du lien';color:var(--faint)}
 .card .lk-url{display:flex;gap:6px;align-items:center}
-.card .lk-url input{flex:1;border:none;border-bottom:1px solid var(--hair);background:none;font-family:var(--ui);font-size:12px;color:var(--ash);outline:none;padding:3px 0}
-.card .lk-go{flex:0 0 auto;border:1px solid var(--hair);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink)}
-.card .lk-go:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.card .lk-url input{flex:1;border:none;border-bottom:1px solid var(--hair);background:none;font-family:var(--ui);font-size:13px;color:var(--ash);outline:none;padding:4px 0}
+.card .lk-go{flex:0 0 auto;border:1px solid var(--hair);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink)}
+.card .lk-go:active{background:var(--ink);color:var(--paper)}
 
 /* projet */
-.card.project{background:var(--mat)}
 .card.project .body{padding:14px}
 .card .pr-title{font-family:var(--disp);font-size:21px;font-weight:300;line-height:1.1;letter-spacing:-.01em;outline:none}
 .card .pr-title:empty::before{content:'Nom du projet';color:var(--faint)}
-.card .pr-status{display:inline-flex;align-items:center;gap:6px;margin:10px 0;padding:4px 10px;border:1px solid var(--hair);font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;user-select:none}
+.card .pr-status{display:inline-flex;align-items:center;gap:6px;margin:10px 0;padding:6px 11px;border:1px solid var(--hair);font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;user-select:none}
 .card .pr-status .dotp{width:6px;height:6px;border-radius:50%;background:var(--ink)}
 .card .pr-desc{font-size:13px;line-height:1.55;color:var(--ash);outline:none;flex:1}
 .card .pr-desc:empty::before{content:'Notes, intentions, pellicule…';color:var(--faint)}
+
+/* ── ZOOM CONTROLS ── */
+#zoomctl{position:fixed;right:calc(16px + var(--safe-r));bottom:calc(16px + var(--safe-b));z-index:30;
+  display:flex;flex-direction:column;background:var(--mat);border:1px solid var(--hair);box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+#zoomctl button{width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink);border-bottom:1px solid var(--hair)}
+#zoomctl button:last-child{border-bottom:none}
+#zoomctl button:active{background:var(--tab)}
+#zoomctl .zlevel{font-size:10px;letter-spacing:.06em;color:var(--ash);height:34px;border-bottom:1px solid var(--hair)}
+#zoomctl .zfit{font-size:14px}
 
 /* ── PICKER ── */
 #picker{position:fixed;inset:0;z-index:500;background:rgba(25,24,20,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
@@ -119,22 +132,23 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .pk-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--hair)}
 .pk-head h3{font-family:var(--disp);font-weight:300;font-size:22px}
 .pk-url{display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid var(--hair)}
-.pk-url input{flex:1;border:1px solid var(--hair);background:var(--mat);padding:10px 12px;font-family:var(--ui);font-size:13px;outline:none}
+.pk-url input{flex:1;border:1px solid var(--hair);background:var(--mat);padding:11px 12px;font-family:var(--ui);font-size:16px;outline:none}
 .pk-url button{padding:0 16px;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
-.pk-grid{overflow:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.pk-grid{overflow:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;-webkit-overflow-scrolling:touch}
 .pk-grid figure{cursor:pointer;background:var(--mat);border:1px solid var(--hair);transition:border-color .15s,transform .15s}
-.pk-grid figure:hover{border-color:var(--ink);transform:translateY(-2px)}
+.pk-grid figure:active{border-color:var(--ink);transform:translateY(-2px)}
 .pk-grid img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}
 .pk-grid figcaption{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);padding:5px 7px}
 .pk-close{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
-.pk-close:hover{color:var(--ink)}
 
-.hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.06em;padding:9px 16px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}
+.hint{position:fixed;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.04em;padding:10px 16px;opacity:0;transition:opacity .35s;pointer-events:none;z-index:40;text-align:center;max-width:90vw}
 .hint.show{opacity:.92}
 
 @media(max-width:680px){
-  .bar{height:auto;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 16px}
-  .tools{width:100%}
+  .bar .who .label{display:none}
+  .bar{flex-wrap:wrap}
+  .tool{padding:11px 12px}
+  .saved{display:none}
 }
 </style>
 </head>
@@ -169,8 +183,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <a class="tool ghost" href="index.html">↗ Site</a>
     </div>
   </div>
-  <div id="scroll">
+
+  <div id="viewport">
     <div id="canvas"></div>
+  </div>
+
+  <div id="zoomctl">
+    <button id="z-in" aria-label="Zoom avant">+</button>
+    <button class="zlevel" id="z-level" aria-label="Réinitialiser le zoom">100%</button>
+    <button id="z-out" aria-label="Zoom arrière">−</button>
+    <button class="zfit" id="z-fit" aria-label="Tout afficher">⤢</button>
   </div>
 </div>
 
@@ -190,13 +212,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <script>
 /* ════════════════════════════════════════════════════════
-   ATELIER — moodboard privé
-   ─ Pour changer le mot de passe, modifie la ligne ci-dessous.
-   ─ Protection légère côté navigateur (ne pas y mettre de secrets).
+   ATELIER — moodboard privé, plan zoomable
+   ─ Mot de passe : modifier la constante PASS ci-dessous.
+   ─ Protection légère côté navigateur (pas de secrets ici).
    ════════════════════════════════════════════════════════ */
 const PASS = "argentique";
 
-/* Images du site, proposées dans le sélecteur */
 const SITE_IMAGES = [
   ["img_5825.jpg","01.01 Ligne de crête"],["img_5827.jpg","01.02 Massif"],
   ["img_5841.jpg","01.03 Sous le pin"],["img_5829.jpg","01.04 Forêt"],
@@ -215,7 +236,6 @@ const SITE_IMAGES = [
 const STATUSES = ["Idée","En cours","Tirage","Édition","Archivé"];
 const KEY = "atelier_raphael_v1";
 
-/* ── état + persistance ── */
 let state = { items: [], z: 1 };
 let memoryOnly = false;
 function load(){
@@ -227,10 +247,7 @@ let saveT;
 function save(){
   if(memoryOnly) return flagSaved();
   clearTimeout(saveT);
-  saveT = setTimeout(()=>{
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); flagSaved(); }
-    catch(e){ memoryOnly = true; }
-  },350);
+  saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(state)); flagSaved(); }catch(e){ memoryOnly=true; } },350);
 }
 function flagSaved(){
   const s=document.getElementById('saved');
@@ -238,9 +255,80 @@ function flagSaved(){
   if(!memoryOnly){ s.classList.add('flash'); setTimeout(()=>s.classList.remove('flash'),700); }
 }
 
-/* ── plateau par défaut (1re visite) ── */
+/* ── plan / zoom ── */
+const viewport=document.getElementById('viewport');
+const canvas=document.getElementById('canvas');
+const CW=2800, CH=1900, MINS=0.35, MAXS=2.6;
+let view={x:14,y:14,scale:1};
+function apply(){
+  canvas.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`;
+  document.getElementById('z-level').textContent=Math.round(view.scale*100)+'%';
+}
+function clampScale(s){return Math.max(MINS,Math.min(MAXS,s));}
+function zoomAt(px,py,factor){
+  const ns=clampScale(view.scale*factor), k=ns/view.scale;
+  view.x = px-(px-view.x)*k; view.y = py-(py-view.y)*k; view.scale=ns; apply();
+}
+function screenToCanvas(sx,sy){
+  const r=viewport.getBoundingClientRect();
+  return { x:(sx-r.left-view.x)/view.scale, y:(sy-r.top-view.y)/view.scale };
+}
+function fitView(){
+  // recadre pour montrer le coin haut-gauche du contenu
+  view={x:14,y:14,scale:1}; apply();
+}
+
+/* ── interaction plan : pan 1 doigt / pinch 2 doigts / molette ── */
+const ptrs=new Map();
+function isInteractive(t){ return t.closest('.head,.rs,.del,.note-text,[contenteditable],input,button,a,.lk-go,.pr-status,.cap,img,figcaption'); }
+viewport.addEventListener('pointerdown',e=>{
+  if(isInteractive(e.target)) return;            // laisser cartes/champs gérer
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  viewport.setPointerCapture(e.pointerId);
+  if(ptrs.size===1) document.body.classList.add('panning');
+});
+viewport.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId)) return;
+  const prev=ptrs.get(e.pointerId);
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){
+    view.x += e.clientX-prev.x; view.y += e.clientY-prev.y; apply();
+  } else if(ptrs.size===2){
+    const ids=[...ptrs.keys()];
+    const a=ptrs.get(ids[0]), b=ptrs.get(ids[1]);
+    const aPrev = ids[0]===e.pointerId?prev:a;
+    const bPrev = ids[1]===e.pointerId?prev:b;
+    const r=viewport.getBoundingClientRect();
+    const cur ={x:(a.x+b.x)/2-r.left, y:(a.y+b.y)/2-r.top};
+    const prv ={x:(aPrev.x+bPrev.x)/2-r.left, y:(aPrev.y+bPrev.y)/2-r.top};
+    const curD=Math.hypot(a.x-b.x,a.y-b.y), prvD=Math.hypot(aPrev.x-bPrev.x,aPrev.y-bPrev.y);
+    if(prvD>0) zoomAt(prv.x,prv.y,curD/prvD);
+    view.x += cur.x-prv.x; view.y += cur.y-prv.y; apply();
+  }
+});
+function endPtr(e){ if(ptrs.has(e.pointerId)){ ptrs.delete(e.pointerId); } if(ptrs.size===0) document.body.classList.remove('panning'); }
+viewport.addEventListener('pointerup',endPtr);
+viewport.addEventListener('pointercancel',endPtr);
+viewport.addEventListener('pointerleave',endPtr);
+// molette / trackpad
+viewport.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=viewport.getBoundingClientRect();
+  const px=e.clientX-r.left, py=e.clientY-r.top;
+  if(e.ctrlKey){ zoomAt(px,py,Math.exp(-e.deltaY*0.01)); }      // pinch trackpad
+  else { zoomAt(px,py, e.deltaY<0?1.1:0.9); }                    // molette = zoom
+},{passive:false});
+// double-clic = zoom avant
+viewport.addEventListener('dblclick',e=>{ if(isInteractive(e.target))return; const r=viewport.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,1.4); });
+// boutons
+document.getElementById('z-in').onclick=()=>zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,1.25);
+document.getElementById('z-out').onclick=()=>zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,0.8);
+document.getElementById('z-level').onclick=()=>{ const r=viewport.getBoundingClientRect(); zoomAt(viewport.clientWidth/2,viewport.clientHeight/2,1/view.scale); };
+document.getElementById('z-fit').onclick=fitView;
+
+/* ── seed ── */
 function seed(){
-  state = { items: [], z: 1 };
+  state={items:[],z:1};
   add('project',{x:60,y:50,w:250,h:210,data:{title:"Neige noire",status:0,desc:"Série 01 — HP5+ 400, Font-Romeu. Sélection finale 8/36. Tirages baryté à caler."}},true);
   add('project',{x:340,y:50,w:250,h:210,data:{title:"Hossegor 19h",status:2,desc:"Série 02 — UltraMax 400. 17 vues en ligne. Penser à un mini-zine couleur."}},true);
   add('project',{x:620,y:50,w:250,h:210,data:{title:"Petit inventaire",status:1,desc:"Série 03 — Portra 400, Canon AE-1. Shooting intérieurs à planifier."}},true);
@@ -251,53 +339,31 @@ function seed(){
   save();
 }
 
-/* ── création de carte ── */
-let uid = Date.now();
-function add(type, opts={}, silent=false){
-  const it = {
-    id: ++uid, type,
-    x: opts.x ?? (document.getElementById('scroll').scrollLeft + 90),
-    y: opts.y ?? (document.getElementById('scroll').scrollTop + 90),
-    w: opts.w ?? defW(type), h: opts.h ?? defH(type),
-    z: ++state.z, data: opts.data ?? defData(type)
-  };
-  state.items.push(it);
-  render(it);
-  if(!silent) save();
-  return it;
+/* ── cartes ── */
+let uid=Date.now();
+function add(type,opts={},silent=false){
+  let x=opts.x, y=opts.y, w=opts.w??defW(type), h=opts.h??defH(type);
+  if(x===undefined){ const c=screenToCanvas(viewport.clientWidth/2,viewport.clientHeight/2); x=Math.max(0,c.x-w/2); y=Math.max(0,c.y-h/2); }
+  const it={id:++uid,type,x,y,w,h,z:++state.z,data:opts.data??defData(type)};
+  state.items.push(it); render(it); if(!silent) save(); return it;
 }
 function defW(t){return t==='note'?220:t==='image'?260:t==='link'?280:250;}
 function defH(t){return t==='note'?150:t==='image'?180:t==='link'?140:210;}
-function defData(t){
-  if(t==='note')return{text:""};
-  if(t==='image')return{src:"",cap:""};
-  if(t==='link')return{title:"",url:"https://"};
-  return{title:"",status:0,desc:""};
-}
+function defData(t){ if(t==='note')return{text:""}; if(t==='image')return{src:"",cap:""}; if(t==='link')return{title:"",url:"https://"}; return{title:"",status:0,desc:""}; }
 
-/* ── rendu d'une carte ── */
-const canvas = document.getElementById('canvas');
 function render(it){
-  let el = document.getElementById('c'+it.id);
-  if(el) el.remove();
-  el = document.createElement('div');
-  el.className = 'card '+it.type; el.id='c'+it.id;
-  el.style.left=it.x+'px'; el.style.top=it.y+'px';
-  el.style.width=it.w+'px'; el.style.height=it.h+'px'; el.style.zIndex=it.z;
-
-  const tag = {note:'Note',image:'Image',link:'Lien',project:'Projet'}[it.type];
-  el.innerHTML = `<div class="head"><span class="tag">${tag}</span><span class="del" title="Supprimer">✕</span></div><div class="body"></div><div class="rs" title="Redimensionner"></div>`;
-  const body = el.querySelector('.body');
+  let el=document.getElementById('c'+it.id); if(el) el.remove();
+  el=document.createElement('div'); el.className='card '+it.type; el.id='c'+it.id;
+  el.style.left=it.x+'px'; el.style.top=it.y+'px'; el.style.width=it.w+'px'; el.style.height=it.h+'px'; el.style.zIndex=it.z;
+  const tag={note:'Note',image:'Image',link:'Lien',project:'Projet'}[it.type];
+  el.innerHTML=`<div class="head"><span class="tag">${tag}</span><span class="del" title="Supprimer">✕</span></div><div class="body"></div><div class="rs" title="Redimensionner"></div>`;
+  const body=el.querySelector('.body');
 
   if(it.type==='note'){
-    const ta=document.createElement('textarea');
-    ta.className='note-text'; ta.placeholder='Écrire…'; ta.value=it.data.text||"";
+    const ta=document.createElement('textarea');ta.className='note-text';ta.placeholder='Écrire…';ta.value=it.data.text||"";
     ta.addEventListener('input',()=>{it.data.text=ta.value;save();});
     body.appendChild(ta);
-  }
-  else if(it.type==='image'){
-    paintImage(it, body);
-  }
+  } else if(it.type==='image'){ paintImage(it,body); }
   else if(it.type==='link'){
     const t=document.createElement('div');t.className='lk-title';t.contentEditable=true;t.textContent=it.data.title||"";
     t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
@@ -306,154 +372,120 @@ function render(it){
     inp.addEventListener('input',()=>{it.data.url=inp.value;save();});
     const go=document.createElement('button');go.className='lk-go';go.textContent='↗';go.title='Ouvrir';
     go.addEventListener('click',()=>{const u=it.data.url||"";if(/^https?:\/\/.+/.test(u))window.open(u,'_blank','noopener');else flash("Adresse incomplète");});
-    row.appendChild(inp);row.appendChild(go);
-    body.appendChild(t);body.appendChild(row);
-  }
-  else if(it.type==='project'){
+    row.appendChild(inp);row.appendChild(go);body.appendChild(t);body.appendChild(row);
+  } else if(it.type==='project'){
     const t=document.createElement('div');t.className='pr-title';t.contentEditable=true;t.textContent=it.data.title||"";
     t.addEventListener('input',()=>{it.data.title=t.textContent;save();});
     const st=document.createElement('div');st.className='pr-status';
-    const setSt=()=>{st.innerHTML='<span class="dotp"></span>'+STATUSES[it.data.status%STATUSES.length];};
-    setSt();
+    const setSt=()=>{st.innerHTML='<span class="dotp"></span>'+STATUSES[it.data.status%STATUSES.length];};setSt();
     st.addEventListener('click',()=>{it.data.status=(it.data.status+1)%STATUSES.length;setSt();save();});
     const d=document.createElement('div');d.className='pr-desc';d.contentEditable=true;d.textContent=it.data.desc||"";
     d.addEventListener('input',()=>{it.data.desc=d.textContent;save();});
     body.appendChild(t);body.appendChild(st);body.appendChild(d);
   }
 
-  // supprimer
-  el.querySelector('.del').addEventListener('click',e=>{
-    e.stopPropagation();
-    state.items=state.items.filter(x=>x.id!==it.id);
-    el.remove(); save();
-  });
-
-  // drag (sur la barre)
-  dragify(el, el.querySelector('.head'), it);
-  // resize
-  resizify(el, el.querySelector('.rs'), it);
-  // focus → premier plan
-  el.addEventListener('pointerdown',()=>{ it.z=++state.z; el.style.zIndex=it.z; save(); });
-
+  el.querySelector('.del').addEventListener('click',e=>{e.stopPropagation();state.items=state.items.filter(x=>x.id!==it.id);el.remove();save();});
+  dragify(el,el.querySelector('.head'),it);
+  resizify(el,el.querySelector('.rs'),it);
+  el.addEventListener('pointerdown',()=>{it.z=++state.z;el.style.zIndex=it.z;},true);
   canvas.appendChild(el);
 }
 
-function paintImage(it, body){
+function paintImage(it,body){
   body.innerHTML='';
   if(it.data.src){
-    const img=document.createElement('img');img.src=it.data.src;img.alt=it.data.cap||"";img.draggable=false;
-    body.appendChild(img);
+    const img=document.createElement('img');img.src=it.data.src;img.alt=it.data.cap||"";img.draggable=false;body.appendChild(img);
     if(it.data.cap){const c=document.createElement('div');c.className='cap';c.textContent=it.data.cap;body.appendChild(c);}
-    body.style.cursor='zoom-in';
-    body.onclick=()=>openPicker(it);
   } else {
-    const e=document.createElement('div');e.className='empty';e.textContent='Choisir une image';
-    body.appendChild(e);
-    body.onclick=()=>openPicker(it);
+    const e=document.createElement('div');e.className='empty';e.textContent='Choisir une image';body.appendChild(e);
   }
+  body.onclick=ev=>{ if(ev.target.closest('.rs'))return; openPicker(it); };
 }
 
-/* ── drag ── */
-function dragify(el, handle, it){
+/* ── drag (corrige l'échelle de zoom) ── */
+function dragify(el,handle,it){
   let sx,sy,ox,oy,drag=false;
   handle.addEventListener('pointerdown',e=>{
     if(e.target.classList.contains('del'))return;
-    drag=true; el.classList.add('grab');
-    sx=e.clientX; sy=e.clientY; ox=it.x; oy=it.y;
-    it.z=++state.z; el.style.zIndex=it.z;
+    e.stopPropagation(); drag=true; el.classList.add('grab');
+    sx=e.clientX;sy=e.clientY;ox=it.x;oy=it.y;it.z=++state.z;el.style.zIndex=it.z;
     handle.setPointerCapture(e.pointerId);
   });
   handle.addEventListener('pointermove',e=>{
     if(!drag)return;
-    it.x=Math.max(0,Math.min(canvas.offsetWidth-it.w, ox+(e.clientX-sx)));
-    it.y=Math.max(0,Math.min(canvas.offsetHeight-it.h, oy+(e.clientY-sy)));
-    el.style.left=it.x+'px'; el.style.top=it.y+'px';
+    it.x=Math.max(0,Math.min(CW-it.w, ox+(e.clientX-sx)/view.scale));
+    it.y=Math.max(0,Math.min(CH-it.h, oy+(e.clientY-sy)/view.scale));
+    el.style.left=it.x+'px';el.style.top=it.y+'px';
   });
   const end=()=>{ if(drag){drag=false;el.classList.remove('grab');save();} };
-  handle.addEventListener('pointerup',end);
-  handle.addEventListener('pointercancel',end);
+  handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
 }
-
-/* ── resize ── */
-function resizify(el, h, it){
+function resizify(el,h,it){
   let sx,sy,ow,oh,rs=false;
-  h.addEventListener('pointerdown',e=>{
-    e.stopPropagation(); rs=true; sx=e.clientX; sy=e.clientY; ow=it.w; oh=it.h;
-    h.setPointerCapture(e.pointerId);
-  });
+  h.addEventListener('pointerdown',e=>{e.stopPropagation();rs=true;sx=e.clientX;sy=e.clientY;ow=it.w;oh=it.h;h.setPointerCapture(e.pointerId);});
   h.addEventListener('pointermove',e=>{
     if(!rs)return;
-    it.w=Math.max(150, ow+(e.clientX-sx));
-    it.h=Math.max(90, oh+(e.clientY-sy));
-    el.style.width=it.w+'px'; el.style.height=it.h+'px';
+    it.w=Math.max(150,ow+(e.clientX-sx)/view.scale);
+    it.h=Math.max(90,oh+(e.clientY-sy)/view.scale);
+    el.style.width=it.w+'px';el.style.height=it.h+'px';
   });
   const end=()=>{ if(rs){rs=false;save();} };
-  h.addEventListener('pointerup',end);
-  h.addEventListener('pointercancel',end);
+  h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
 }
 
-/* ── picker d'image ── */
-let pickTarget=null;
-const picker=document.getElementById('picker');
+/* ── picker ── */
+let pickTarget=null; const picker=document.getElementById('picker');
 function buildPicker(){
-  const g=document.getElementById('pk-grid'); g.innerHTML='';
+  const g=document.getElementById('pk-grid');g.innerHTML='';
   SITE_IMAGES.forEach(([fn,cap])=>{
     const f=document.createElement('figure');
     f.innerHTML=`<img loading="lazy" src="images/${fn}" alt=""><figcaption>${cap}</figcaption>`;
-    f.addEventListener('click',()=>{ if(pickTarget){pickTarget.data.src="images/"+fn; pickTarget.data.cap=cap; render(pickTarget); save();} closePicker(); });
+    f.addEventListener('click',()=>{ if(pickTarget){pickTarget.data.src="images/"+fn;pickTarget.data.cap=cap;render(pickTarget);save();} closePicker(); });
     g.appendChild(f);
   });
 }
-function openPicker(it){ pickTarget=it; picker.classList.add('on'); }
-function closePicker(){ picker.classList.remove('on'); pickTarget=null; document.getElementById('pk-input').value=''; }
+function openPicker(it){pickTarget=it;picker.classList.add('on');}
+function closePicker(){picker.classList.remove('on');pickTarget=null;document.getElementById('pk-input').value='';}
 document.getElementById('pk-close').addEventListener('click',closePicker);
 picker.addEventListener('click',e=>{if(e.target===picker)closePicker();});
 document.getElementById('pk-add').addEventListener('click',()=>{
   const u=document.getElementById('pk-input').value.trim();
   if(!/^https?:\/\/.+/.test(u))return flash("Adresse invalide");
-  if(pickTarget){pickTarget.data.src=u; pickTarget.data.cap=""; render(pickTarget); save();}
+  if(pickTarget){pickTarget.data.src=u;pickTarget.data.cap="";render(pickTarget);save();}
   closePicker();
 });
 
 /* ── toolbar ── */
 document.querySelectorAll('[data-add]').forEach(b=>{
-  b.addEventListener('click',()=>{ const it=add(b.dataset.add); if(b.dataset.add==='image')openPicker(it); });
+  b.addEventListener('click',()=>{const it=add(b.dataset.add);if(b.dataset.add==='image')openPicker(it);});
 });
 document.getElementById('reset').addEventListener('click',()=>{
-  if(confirm("Vider entièrement le tableau ? Cette action est définitive.")){
-    canvas.innerHTML=''; seed(); renderAll(); flash("Tableau réinitialisé");
-  }
+  if(confirm("Vider entièrement le tableau ? Cette action est définitive.")){ canvas.innerHTML='';seed();renderAll();fitView();flash("Tableau réinitialisé"); }
 });
 
-function renderAll(){ canvas.innerHTML=''; state.items.forEach(render); }
-function flash(msg){const h=document.getElementById('hint');h.textContent=msg;h.classList.add('show');setTimeout(()=>h.classList.remove('show'),1600);}
+function renderAll(){canvas.innerHTML='';state.items.forEach(render);}
+function flash(msg){const h=document.getElementById('hint');h.textContent=msg;h.classList.add('show');clearTimeout(h._t);h._t=setTimeout(()=>h.classList.remove('show'),2200);}
 
 /* ── démarrage ── */
 function start(){
-  const had = load();
-  if(!had || !state.items || !state.items.length){ seed(); }
-  uid = Math.max(uid, ...state.items.map(i=>i.id), 0);
-  renderAll();
-  buildPicker();
+  const had=load();
+  if(!had||!state.items||!state.items.length){ seed(); }
+  uid=Math.max(uid,...state.items.map(i=>i.id),0);
+  renderAll(); buildPicker(); apply();
   document.getElementById('app').classList.add('on');
   flagSaved();
+  setTimeout(()=>flash("Pince pour zoomer · glisse à un doigt pour te déplacer"),600);
 }
 
 /* ── gate ── */
 const gate=document.getElementById('gate');
 function tryEnter(){
   const v=document.getElementById('gate-input').value;
-  if(v===PASS){
-    try{ sessionStorage.setItem('atelier_ok','1'); }catch(e){}
-    gate.classList.add('hidden'); start();
-  } else {
-    document.getElementById('gate-err').textContent="Mot de passe incorrect.";
-    document.getElementById('gate-input').value="";
-  }
+  if(v===PASS){ try{sessionStorage.setItem('atelier_ok','1');}catch(e){} gate.classList.add('hidden'); start(); }
+  else { document.getElementById('gate-err').textContent="Mot de passe incorrect."; document.getElementById('gate-input').value=""; }
 }
 document.getElementById('gate-btn').addEventListener('click',tryEnter);
 document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryEnter();});
-// déjà entré dans cette session ?
 try{ if(sessionStorage.getItem('atelier_ok')==='1'){ gate.classList.add('hidden'); start(); } else { document.getElementById('gate-input').focus(); } }
 catch(e){ document.getElementById('gate-input').focus(); }
 </script>
