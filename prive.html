@@ -163,6 +163,33 @@ body.connecting .card{cursor:crosshair}
 .gal-item:hover .gdel{opacity:1}
 @media(hover:none){.gal-item .gdel{opacity:1}}
 
+/* ── vue FICHIERS ── */
+#filesview{flex:1 1 auto;overflow:auto;display:none;padding:clamp(16px,3vw,30px);padding-bottom:calc(60px + var(--safe-b));-webkit-overflow-scrolling:touch;max-width:1100px;margin:0 auto;width:100%}
+#filesview.on{display:block}
+.fv-empty{color:var(--ash);text-align:center;padding:60px 20px;line-height:1.7}
+.fv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.fv-item{position:relative;background:var(--mat);border:1px solid var(--hair);box-shadow:0 1px 0 var(--hair),0 16px 36px -32px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.fv-thumb{aspect-ratio:4/3;background:var(--tab);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative}
+.fv-thumb img,.fv-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.fv-thumb .ic{font-family:var(--disp);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
+.fv-thumb .play{position:absolute;width:42px;height:42px;border-radius:50%;background:rgba(25,24,20,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;pointer-events:none}
+.fv-meta{padding:10px 12px;border-top:1px solid var(--hair);min-width:0}
+.fv-meta .nm{font-size:12px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fv-meta .sub{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+.fv-ops{display:flex;border-top:1px solid var(--hair)}
+.fv-ops a,.fv-ops button{flex:1;padding:9px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);text-align:center;text-decoration:none;background:none;border:none;border-right:1px solid var(--hair)}
+.fv-ops a:last-child,.fv-ops button:last-child{border-right:none}
+.fv-ops a:active{background:var(--tab);color:var(--ink)}
+.fv-ops .rm:active{background:rgba(180,69,58,.08);color:#b4453a}
+.fv-prog{position:fixed;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:11px;padding:10px 16px;z-index:40;display:none}
+.fv-prog.on{display:block}
+
+/* lightbox fichiers (réutilise glb mais accepte vidéo) */
+#flb{position:fixed;inset:0;z-index:600;background:rgba(244,244,241,.97);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+#flb.on{display:flex}
+#flb img,#flb video{max-width:92vw;max-height:84vh;background:var(--mat);padding:12px;box-shadow:0 30px 80px -40px rgba(0,0,0,.6)}
+#flb .x{position:fixed;top:calc(20px + var(--safe-t));right:24px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);border:1px solid var(--hair);padding:9px 14px;background:var(--mat)}
+
 /* ── éditeur de site ── */
 #siteedit{flex:1 1 auto;overflow:auto;display:none;padding:clamp(18px,4vw,40px);padding-bottom:calc(60px + var(--safe-b));-webkit-overflow-scrolling:touch;max-width:920px;margin:0 auto;width:100%}
 #siteedit.on{display:block}
@@ -271,6 +298,7 @@ body.connecting .card{cursor:crosshair}
       <div class="tabs">
         <button class="tabbtn on" data-tab="boards">Tableaux</button>
         <button class="tabbtn" data-tab="gallery">Galerie</button>
+        <button class="tabbtn" data-tab="files">Fichiers</button>
         <button class="tabbtn" data-tab="site">Site</button>
       </div>
     </div>
@@ -312,6 +340,15 @@ body.connecting .card{cursor:crosshair}
     <span class="label" id="gal-count"></span>
   </div>
 
+  <!-- sous-barre FICHIERS -->
+  <div class="subbar" id="subbar-files" style="display:none">
+    <span class="bn" style="font-family:var(--disp);font-size:16px;font-weight:300;padding:7px 4px">Mes fichiers</span>
+    <span class="spacer"></span>
+    <button class="tool" id="files-add"><span class="plus">+</span> Téléverser</button>
+    <span class="label" id="files-count"></span>
+    <input id="files-input" type="file" accept="image/*,video/*,application/pdf" multiple hidden>
+  </div>
+
   <!-- sous-barre SITE -->
   <div class="subbar" id="subbar-site" style="display:none">
     <span class="bn" style="font-family:var(--disp);font-size:16px;font-weight:300;padding:7px 4px">Page d'accueil</span>
@@ -336,6 +373,9 @@ body.connecting .card{cursor:crosshair}
 
   <!-- VUE SITE (éditeur) -->
   <div id="siteedit"></div>
+
+  <!-- VUE FICHIERS -->
+  <div id="filesview"></div>
 </div>
 
 <!-- PICKER -->
@@ -361,6 +401,12 @@ body.connecting .card{cursor:crosshair}
   <button class="gn gp" id="glb-prev">‹</button>
   <img id="glb-img" src="" alt="">
   <button class="gn gx" id="glb-next">›</button>
+</div>
+
+<!-- LIGHTBOX FICHIERS -->
+<div id="flb">
+  <button class="x" id="flb-x">Fermer ✕</button>
+  <div id="flb-body"></div>
 </div>
 
 <div class="hint" id="hint"></div>
@@ -415,7 +461,7 @@ function uid8(p){
 function defaultState(){
   const b=newBoard("Tableau principal");
   seedBoard(b);
-  return { boards:[b], activeBoard:b.id, albums:[newAlbum("Pellicule")], activeAlbum:null, z:50 };
+  return { boards:[b], activeBoard:b.id, albums:[newAlbum("Pellicule")], activeAlbum:null, files:[], z:50 };
 }
 function newBoard(name){ return {id:uid8('b'),name:name||"Nouveau tableau",items:[],connections:[],view:{x:14,y:14,scale:1}}; }
 function newAlbum(name){ return {id:uid8('a'),name:name||"Nouvel album",images:[]}; }
@@ -741,15 +787,18 @@ document.getElementById('clear-board').addEventListener('click',()=>{ if(confirm
 /* ── onglets ── */
 function setTab(tab){
   document.querySelectorAll('.tabbtn').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
-  const boards=tab==='boards', gallery=tab==='gallery', site=tab==='site';
+  const boards=tab==='boards', gallery=tab==='gallery', site=tab==='site', files=tab==='files';
   document.getElementById('subbar-boards').style.display=boards?'flex':'none';
   document.getElementById('subbar-gallery').style.display=gallery?'flex':'none';
+  document.getElementById('subbar-files').style.display=files?'flex':'none';
   document.getElementById('subbar-site').style.display=site?'flex':'none';
   viewport.style.display=boards?'block':'none';
   document.getElementById('zoomctl').classList.toggle('hide',!boards);
   document.getElementById('gallery').classList.toggle('on',gallery);
+  document.getElementById('filesview').classList.toggle('on',files);
   document.getElementById('siteedit').classList.toggle('on',site);
   if(gallery)renderGallery();
+  if(files)renderFiles();
   if(site)renderSiteEditor();
 }
 document.querySelectorAll('.tabbtn').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
@@ -897,6 +946,7 @@ const SITE_TEXT_LABELS = {
   "h2":"Titre de la série","desc":"Description","t0":"Pellicule","t1":"Boîtier","t2":"Lieu","t3":"Période / Statut","t4":"Sélection"
 };
 const SERIES_NAMES = {"01":"Série 01","02":"Série 02","03":"Série 03","04":"Série 04"};
+const SERIES_URLS  = {"01":"serie-01.html","02":"serie-02.html","03":null,"04":null};
 
 let siteOv=null;            // overrides chargés (Firestore site/home)
 let siteDirty=false;        // modifications non publiées
@@ -951,7 +1001,9 @@ function renderSiteEditor(){
   // ── sections SÉRIES ──
   ['01','02','03','04'].forEach(sid=>{
     const sec=el('div','se-sec');
-    sec.appendChild(hRow(SERIES_NAMES[sid]+" — "+stripTags(ov.texts['s'+sid+'.h2']||'')));
+    const hdr=hRow(SERIES_NAMES[sid]+" — "+stripTags(ov.texts['s'+sid+'.h2']||''));
+    if(SERIES_URLS[sid]){ const a=document.createElement('a'); a.href=SERIES_URLS[sid]; a.target='_blank'; a.rel='noopener'; a.style.cssText='font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);text-decoration:none'; a.textContent='↗ Aperçu'; hdr.appendChild(a); }
+    sec.appendChild(hdr);
     const body=el('div','se-body');
     body.appendChild(field("s"+sid+".h2","Titre de la série",true));
     body.appendChild(field("s"+sid+".desc","Description",false,true));
@@ -1103,6 +1155,138 @@ async function saveSite(){
 }
 document.getElementById('site-save').addEventListener('click',saveSite);
 
+/* ════════════════ FICHIERS — cloud Cloudinary ════════════════
+   Stockage des fichiers (images/vidéos/PDF) chez Cloudinary (gratuit).
+   Seul un index léger (nom, type, url, date) est gardé dans state.files,
+   synchronisé via Firestore comme le reste de l'atelier.
+   Upload non signé : aucune clé secrète n'est exposée ici. */
+const CLOUDINARY = { cloudName:"dzq1a6leu", uploadPreset:"ml_default" };
+
+function fmtSize(b){ if(!b&&b!==0)return""; if(b<1024)return b+" o"; if(b<1048576)return (b/1024).toFixed(0)+" Ko"; return (b/1048576).toFixed(1)+" Mo"; }
+function fileKind(f){ const t=f.type||""; if(t.startsWith('image/'))return'image'; if(t.startsWith('video/'))return'video'; if(t==='application/pdf')return'pdf'; return'raw'; }
+
+/* upload d'un fichier vers Cloudinary, renvoie l'entrée d'index */
+function cloudinaryUpload(file,onProgress){
+  return new Promise((resolve,reject)=>{
+    const url=`https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/auto/upload`;
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset',CLOUDINARY.uploadPreset);
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',url);
+    xhr.upload.onprogress=e=>{ if(e.lengthComputable&&onProgress)onProgress(e.loaded/e.total); };
+    xhr.onload=()=>{
+      if(xhr.status>=200&&xhr.status<300){
+        try{
+          const r=JSON.parse(xhr.responseText);
+          resolve({
+            id:uid8('f'),
+            name:file.name||(r.original_filename||'fichier'),
+            kind:fileKind(file),
+            url:r.secure_url,
+            bytes:r.bytes||file.size||0,
+            format:r.format||'',
+            width:r.width||0, height:r.height||0,
+            added:Date.now()
+          });
+        }catch(e){ reject(e); }
+      } else {
+        let msg="Upload refusé ("+xhr.status+")";
+        try{ const r=JSON.parse(xhr.responseText); if(r.error&&r.error.message)msg=r.error.message; }catch(e){}
+        reject(new Error(msg));
+      }
+    };
+    xhr.onerror=()=>reject(new Error("Connexion interrompue"));
+    xhr.send(fd);
+  });
+}
+
+const filesProg=(()=>{ const d=document.createElement('div'); d.className='fv-prog'; d.id='fv-prog'; document.body.appendChild(d); return d; })();
+function showProg(t){ filesProg.textContent=t; filesProg.classList.add('on'); }
+function hideProg(){ filesProg.classList.remove('on'); }
+
+async function handleFileUploads(list){
+  const files=[...list];
+  if(!files.length)return;
+  if(!state.files)state.files=[];
+  let done=0, failed=0;
+  for(const f of files){
+    showProg(`Envoi ${done+1}/${files.length} — ${f.name}`);
+    try{
+      const entry=await cloudinaryUpload(f,p=>{ showProg(`Envoi ${done+1}/${files.length} — ${Math.round(p*100)}%`); });
+      state.files.unshift(entry);
+      done++;
+      renderFiles(); save();
+    }catch(e){ failed++; console.error(e); flash("Échec : "+(e.message||f.name)); }
+  }
+  hideProg();
+  flash(failed? `${done} envoyé(s), ${failed} échec(s)` : (done>1?`${done} fichiers envoyés ✓`:"Fichier envoyé ✓"));
+}
+
+function renderFiles(){
+  const root=document.getElementById('filesview');
+  const list=(state&&state.files)||[];
+  const cnt=document.getElementById('files-count');
+  if(cnt)cnt.textContent=list.length?(list.length+" fichier"+(list.length>1?"s":"")):"";
+  root.innerHTML='';
+  if(!list.length){
+    const e=document.createElement('div'); e.className='fv-empty';
+    e.innerHTML="Aucun fichier pour l'instant.<br>Touche « + Téléverser » pour envoyer images, vidéos ou PDF.";
+    root.appendChild(e); return;
+  }
+  const grid=document.createElement('div'); grid.className='fv-grid';
+  list.forEach(f=>{
+    const it=document.createElement('div'); it.className='fv-item';
+    const thumb=document.createElement('div'); thumb.className='fv-thumb';
+    if(f.kind==='image'){ const img=document.createElement('img'); img.src=f.url; img.loading='lazy'; thumb.appendChild(img); }
+    else if(f.kind==='video'){ const v=document.createElement('video'); v.src=f.url; v.muted=true; v.preload='metadata'; thumb.appendChild(v); const p=document.createElement('div'); p.className='play'; p.textContent='▶'; thumb.appendChild(p); }
+    else if(f.kind==='pdf'){ const s=document.createElement('div'); s.className='ic'; s.textContent='PDF'; thumb.appendChild(s); }
+    else { const s=document.createElement('div'); s.className='ic'; s.textContent='Fichier'; thumb.appendChild(s); }
+    thumb.addEventListener('click',()=>openFileLightbox(f));
+
+    const meta=document.createElement('div'); meta.className='fv-meta';
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=f.name; nm.title=f.name;
+    const sub=document.createElement('div'); sub.className='sub';
+    const d=new Date(f.added); const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+    sub.textContent=[f.kind.toUpperCase(),fmtSize(f.bytes),ds].filter(Boolean).join(' · ');
+    meta.appendChild(nm); meta.appendChild(sub);
+
+    const ops=document.createElement('div'); ops.className='fv-ops';
+    const dl=document.createElement('a'); dl.textContent='Télécharger';
+    dl.href=f.url.replace('/upload/','/upload/fl_attachment/'); dl.setAttribute('download',''); dl.rel='noopener';
+    const open=document.createElement('a'); open.textContent='Ouvrir'; open.href=f.url; open.target='_blank'; open.rel='noopener';
+    const rm=document.createElement('button'); rm.className='rm'; rm.textContent='Retirer';
+    rm.addEventListener('click',()=>{
+      if(confirm("Retirer « "+f.name+" » de la liste ?\n\nLe fichier reste stocké sur Cloudinary ; tu peux le purger depuis leur tableau de bord.")){
+        state.files=(state.files||[]).filter(x=>x.id!==f.id); renderFiles(); save(); flash("Retiré de la liste");
+      }
+    });
+    ops.appendChild(dl); ops.appendChild(open); ops.appendChild(rm);
+
+    it.appendChild(thumb); it.appendChild(meta); it.appendChild(ops);
+    grid.appendChild(it);
+  });
+  root.appendChild(grid);
+}
+
+/* lightbox fichiers (image agrandie, vidéo lisible, PDF -> ouvre l'onglet) */
+const flb=document.getElementById('flb'), flbBody=document.getElementById('flb-body');
+function openFileLightbox(f){
+  if(f.kind==='pdf'||f.kind==='raw'){ window.open(f.url,'_blank','noopener'); return; }
+  flbBody.innerHTML='';
+  if(f.kind==='image'){ const img=document.createElement('img'); img.src=f.url; flbBody.appendChild(img); }
+  else if(f.kind==='video'){ const v=document.createElement('video'); v.src=f.url; v.controls=true; v.autoplay=true; v.playsInline=true; flbBody.appendChild(v); }
+  flb.classList.add('on');
+}
+function closeFileLightbox(){ flb.classList.remove('on'); flbBody.innerHTML=''; }
+document.getElementById('flb-x').addEventListener('click',closeFileLightbox);
+flb.addEventListener('click',e=>{ if(e.target===flb)closeFileLightbox(); });
+
+/* boutons de la sous-barre */
+const filesInput=document.getElementById('files-input');
+document.getElementById('files-add').addEventListener('click',()=>filesInput.click());
+filesInput.addEventListener('change',e=>{ handleFileUploads(e.target.files); e.target.value=""; });
+
 
 /* ── divers ── */
 function flash(m){ const h=document.getElementById('hint'); h.textContent=m; h.classList.add('show'); clearTimeout(h._t); h._t=setTimeout(()=>h.classList.remove('show'),2200); }
@@ -1116,7 +1300,7 @@ function bootUI(){
   renderBoardBar(); renderBoard(); renderAlbumBar(); buildPicker();
   document.getElementById('app').classList.add('on'); flagSaved();
 }
-function rerenderAll(){ ensureAlbums(); renderBoardBar(); renderBoard(); renderAlbumBar(); if(document.getElementById('gallery').classList.contains('on'))renderGallery(); }
+function rerenderAll(){ ensureAlbums(); renderBoardBar(); renderBoard(); renderAlbumBar(); if(document.getElementById('gallery').classList.contains('on'))renderGallery(); if(document.getElementById('filesview').classList.contains('on'))renderFiles(); }
 
 /* ── démarrage LOCAL (si pas de Firebase) ── */
 function startLocal(){
