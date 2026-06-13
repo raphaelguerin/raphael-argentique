@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,18..72,200;0,18..72,300;0,18..72,400;1,18..72,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,18..72,200;0,18..72,300;0,18..72,400;1,18..72,300&display=swap" rel="stylesheet"></noscript>
+<!-- Firebase (lecture des modifications faites depuis l'Atelier) -->
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -184,9 +187,9 @@ footer .label a:hover{color:var(--ink)}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="eyebrow label">Photographies — 2022 / 2026</div>
-  <h1>Le grain, la lumière,<br>et <em>rien d'autre.</em></h1>
-  <p class="lede">Quatre séries au <b>35&nbsp;mm</b>, tirées du temps long. Boîtier hérité, pellicule choisie, aucune retouche numérique au-delà du scan. De la <b>neige de Font-Romeu</b> au <b>sel d'Hossegor</b>.</p>
+  <div class="eyebrow label" data-edit="hero.eyebrow">Photographies — 2022 / 2026</div>
+  <h1 data-edit="hero.h1">Le grain, la lumière,<br>et <em>rien d'autre.</em></h1>
+  <p class="lede" data-edit="hero.lede">Quatre séries au <b>35&nbsp;mm</b>, tirées du temps long. Boîtier hérité, pellicule choisie, aucune retouche numérique au-delà du scan. De la <b>neige de Font-Romeu</b> au <b>sel d'Hossegor</b>.</p>
 </section>
 
 <!-- IMAGE D'OUVERTURE -->
@@ -210,61 +213,53 @@ footer .label a:hover{color:var(--ink)}
 <!-- ── SÉRIE 01 ── -->
 <section class="series reveal" id="serie-01">
   <div class="series-head">
-    <div class="top-line"><span class="snum">01</span><h2>Neige <em>noire</em></h2></div>
-    <p class="desc">Une semaine à Font-Romeu, l'hiver tombé sur les Pyrénées. Ilford HP5+, contraste fermé : la neige cesse d'être blanche, le ciel se fait métal. Huit vues d'un même froid.</p>
+    <div class="top-line"><span class="snum">01</span><h2 data-edit="s01.h2">Neige <em>noire</em></h2></div>
+    <p class="desc" data-edit="s01.desc">Une semaine à Font-Romeu, l'hiver tombé sur les Pyrénées. Ilford HP5+, contraste fermé : la neige cesse d'être blanche, le ciel se fait métal. Huit vues d'un même froid.</p>
     <div class="series-table">
-      <div class="cell"><div class="k">Pellicule</div><div class="v">Ilford HP5+ 400</div></div>
-      <div class="cell"><div class="k">Boîtier</div><div class="v">Olympus mju III</div></div>
-      <div class="cell"><div class="k">Lieu</div><div class="v">Font-Romeu, FR</div></div>
-      <div class="cell"><div class="k">Période</div><div class="v">Hiver 2026</div></div>
-      <div class="cell"><div class="k">Sélection</div><div class="v">08 / 36</div></div>
+      <div class="cell"><div class="k">Pellicule</div><div class="v" data-edit="s01.t0">Ilford HP5+ 400</div></div>
+      <div class="cell"><div class="k">Boîtier</div><div class="v" data-edit="s01.t1">Olympus mju III</div></div>
+      <div class="cell"><div class="k">Lieu</div><div class="v" data-edit="s01.t2">Font-Romeu, FR</div></div>
+      <div class="cell"><div class="k">Période</div><div class="v" data-edit="s01.t3">Hiver 2026</div></div>
+      <div class="cell"><div class="k">Sélection</div><div class="v" data-edit="s01.t4">08 / 36</div></div>
     </div>
   </div>
-  <div class="plates">
-        <div class="plate feature">
-          <figure data-full="images/img_5825.jpg" data-cap="01.01 · HP5+ 400 · 35 mm">
+  <div class="plates" data-series="01">
+        <div class="plate feature" data-img="img_5825.jpg"><figure data-full="images/img_5825.jpg" data-cap="01.01 · HP5+ 400 · 35 mm">
             <img loading="eager" decoding="async" src="images/img_5825.jpg" alt="Ligne de crête — 01.01">
             <figcaption><span class="title">Ligne de crête</span><span class="label">01.01 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_5827.jpg" data-cap="01.02 · HP5+ 400 · 35 mm">
+        <div class="plate" data-img="img_5827.jpg"><figure data-full="images/img_5827.jpg" data-cap="01.02 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5827.jpg" alt="Massif, contre-jour — 01.02">
             <figcaption><span class="title">Massif, contre-jour</span><span class="label">01.02 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_5841.jpg" data-cap="01.03 · HP5+ 400 · 35 mm">
+        <div class="plate" data-img="img_5841.jpg"><figure data-full="images/img_5841.jpg" data-cap="01.03 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5841.jpg" alt="Sous le pin — 01.03">
             <figcaption><span class="title">Sous le pin</span><span class="label">01.03 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_5829.jpg" data-cap="01.04 · HP5+ 400 · 35 mm">
+        <div class="plate" data-img="img_5829.jpg"><figure data-full="images/img_5829.jpg" data-cap="01.04 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5829.jpg" alt="Forêt, brume basse — 01.04">
             <figcaption><span class="title">Forêt, brume basse</span><span class="label">01.04 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_5828.jpg" data-cap="01.05 · HP5+ 400 · 35 mm">
+        <div class="plate" data-img="img_5828.jpg"><figure data-full="images/img_5828.jpg" data-cap="01.05 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5828.jpg" alt="File d'attente — 01.05">
             <figcaption><span class="title">File d'attente</span><span class="label">01.05 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_5833.jpg" data-cap="01.06 · HP5+ 400 · 35 mm">
+        <div class="plate" data-img="img_5833.jpg"><figure data-full="images/img_5833.jpg" data-cap="01.06 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5833.jpg" alt="Le chalet — 01.06">
             <figcaption><span class="title">Le chalet</span><span class="label">01.06 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate feature">
-          <figure data-full="images/img_5835.jpg" data-cap="01.07 · HP5+ 400 · 35 mm">
+        <div class="plate feature" data-img="img_5835.jpg"><figure data-full="images/img_5835.jpg" data-cap="01.07 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5835.jpg" alt="Vallée ouverte — 01.07">
             <figcaption><span class="title">Vallée ouverte</span><span class="label">01.07 · HP5+ 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate feature">
-          <figure data-full="images/img_5839.jpg" data-cap="01.08 · HP5+ 400 · 35 mm">
+        <div class="plate feature" data-img="img_5839.jpg"><figure data-full="images/img_5839.jpg" data-cap="01.08 · HP5+ 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_5839.jpg" alt="Versant nord — 01.08">
             <figcaption><span class="title">Versant nord</span><span class="label">01.08 · HP5+ 400</span></figcaption>
           </figure>
@@ -275,115 +270,98 @@ footer .label a:hover{color:var(--ink)}
 <!-- ── SÉRIE 02 ── -->
 <section class="series reveal" id="serie-02">
   <div class="series-head">
-    <div class="top-line"><span class="snum">02</span><h2>Hossegor, <em>19&nbsp;h</em></h2></div>
-    <p class="desc">La côte landaise quand le soleil tombe. Kodak UltraMax poussée à fond, couleurs saturées, grain franc. La ville, la plage, puis l'or sur l'eau — dix-sept vues d'une même heure qui s'étire.</p>
+    <div class="top-line"><span class="snum">02</span><h2 data-edit="s02.h2">Hossegor, <em>19&nbsp;h</em></h2></div>
+    <p class="desc" data-edit="s02.desc">La côte landaise quand le soleil tombe. Kodak UltraMax poussée à fond, couleurs saturées, grain franc. La ville, la plage, puis l'or sur l'eau — dix-sept vues d'une même heure qui s'étire.</p>
     <div class="series-table">
-      <div class="cell"><div class="k">Pellicule</div><div class="v">Kodak UltraMax 400</div></div>
-      <div class="cell"><div class="k">Boîtier</div><div class="v">Olympus mju III</div></div>
-      <div class="cell"><div class="k">Lieu</div><div class="v">Hossegor, FR</div></div>
-      <div class="cell"><div class="k">Période</div><div class="v">Été 2025</div></div>
-      <div class="cell"><div class="k">Sélection</div><div class="v">17 / 24</div></div>
+      <div class="cell"><div class="k">Pellicule</div><div class="v" data-edit="s02.t0">Kodak UltraMax 400</div></div>
+      <div class="cell"><div class="k">Boîtier</div><div class="v" data-edit="s02.t1">Olympus mju III</div></div>
+      <div class="cell"><div class="k">Lieu</div><div class="v" data-edit="s02.t2">Hossegor, FR</div></div>
+      <div class="cell"><div class="k">Période</div><div class="v" data-edit="s02.t3">Été 2025</div></div>
+      <div class="cell"><div class="k">Sélection</div><div class="v" data-edit="s02.t4">17 / 24</div></div>
     </div>
   </div>
-  <div class="plates">
-        <div class="plate feature">
-          <figure data-full="images/img_3859.jpg" data-cap="02.01 · UltraMax 400 · 35 mm">
+  <div class="plates" data-series="02">
+        <div class="plate feature" data-img="img_3859.jpg"><figure data-full="images/img_3859.jpg" data-cap="02.01 · UltraMax 400 · 35 mm">
             <img loading="eager" decoding="async" src="images/img_3859.jpg" alt="La ville sur l'eau — 02.01">
             <figcaption><span class="title">La ville sur l'eau</span><span class="label">02.01 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3861.jpg" data-cap="02.02 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3861.jpg"><figure data-full="images/img_3861.jpg" data-cap="02.02 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3861.jpg" alt="Front de mer — 02.02">
             <figcaption><span class="title">Front de mer</span><span class="label">02.02 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3863.jpg" data-cap="02.03 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3863.jpg"><figure data-full="images/img_3863.jpg" data-cap="02.03 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3863.jpg" alt="Accroupi, sable chaud — 02.03">
             <figcaption><span class="title">Accroupi, sable chaud</span><span class="label">02.03 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3867.jpg" data-cap="02.04 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3867.jpg"><figure data-full="images/img_3867.jpg" data-cap="02.04 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3867.jpg" alt="Ciel rose, marée basse — 02.04">
             <figcaption><span class="title">Ciel rose, marée basse</span><span class="label">02.04 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3893.jpg" data-cap="02.05 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3893.jpg"><figure data-full="images/img_3893.jpg" data-cap="02.05 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3893.jpg" alt="Bouée — 02.05">
             <figcaption><span class="title">Bouée</span><span class="label">02.05 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3868.jpg" data-cap="02.06 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3868.jpg"><figure data-full="images/img_3868.jpg" data-cap="02.06 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3868.jpg" alt="Le port — 02.06">
             <figcaption><span class="title">Le port</span><span class="label">02.06 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3870.jpg" data-cap="02.07 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3870.jpg"><figure data-full="images/img_3870.jpg" data-cap="02.07 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3870.jpg" alt="Pins, place du soir — 02.07">
             <figcaption><span class="title">Pins, place du soir</span><span class="label">02.07 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3872.jpg" data-cap="02.08 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3872.jpg"><figure data-full="images/img_3872.jpg" data-cap="02.08 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3872.jpg" alt="Bain, fin d'après-midi — 02.08">
             <figcaption><span class="title">Bain, fin d'après-midi</span><span class="label">02.08 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate feature">
-          <figure data-full="images/img_3885.jpg" data-cap="02.09 · UltraMax 400 · 35 mm">
+        <div class="plate feature" data-img="img_3885.jpg"><figure data-full="images/img_3885.jpg" data-cap="02.09 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3885.jpg" alt="Reflets, 19 h — 02.09">
             <figcaption><span class="title">Reflets, 19 h</span><span class="label">02.09 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3874.jpg" data-cap="02.10 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3874.jpg"><figure data-full="images/img_3874.jpg" data-cap="02.10 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3874.jpg" alt="Façades dorées — 02.10">
             <figcaption><span class="title">Façades dorées</span><span class="label">02.10 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3876.jpg" data-cap="02.11 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3876.jpg"><figure data-full="images/img_3876.jpg" data-cap="02.11 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3876.jpg" alt="Le dernier bain — 02.11">
             <figcaption><span class="title">Le dernier bain</span><span class="label">02.11 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3883.jpg" data-cap="02.12 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3883.jpg"><figure data-full="images/img_3883.jpg" data-cap="02.12 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3883.jpg" alt="Kayaks — 02.12">
             <figcaption><span class="title">Kayaks</span><span class="label">02.12 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3880.jpg" data-cap="02.13 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3880.jpg"><figure data-full="images/img_3880.jpg" data-cap="02.13 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3880.jpg" alt="Soleil bas (vertical) — 02.13">
             <figcaption><span class="title">Soleil bas (vertical)</span><span class="label">02.13 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate feature">
-          <figure data-full="images/img_3869.jpg" data-cap="02.14 · UltraMax 400 · 35 mm">
+        <div class="plate feature" data-img="img_3869.jpg"><figure data-full="images/img_3869.jpg" data-cap="02.14 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3869.jpg" alt="Deux silhouettes — 02.14">
             <figcaption><span class="title">Deux silhouettes</span><span class="label">02.14 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3887.jpg" data-cap="02.15 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3887.jpg"><figure data-full="images/img_3887.jpg" data-cap="02.15 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3887.jpg" alt="Or sur l'eau — 02.15">
             <figcaption><span class="title">Or sur l'eau</span><span class="label">02.15 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate">
-          <figure data-full="images/img_3889.jpg" data-cap="02.16 · UltraMax 400 · 35 mm">
+        <div class="plate" data-img="img_3889.jpg"><figure data-full="images/img_3889.jpg" data-cap="02.16 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3889.jpg" alt="Nuage, couchant — 02.16">
             <figcaption><span class="title">Nuage, couchant</span><span class="label">02.16 · UltraMax 400</span></figcaption>
           </figure>
         </div>
-        <div class="plate feature">
-          <figure data-full="images/img_3891.jpg" data-cap="02.17 · UltraMax 400 · 35 mm">
+        <div class="plate feature" data-img="img_3891.jpg"><figure data-full="images/img_3891.jpg" data-cap="02.17 · UltraMax 400 · 35 mm">
             <img loading="lazy" decoding="async" src="images/img_3891.jpg" alt="Dernière lumière — 02.17">
             <figcaption><span class="title">Dernière lumière</span><span class="label">02.17 · UltraMax 400</span></figcaption>
           </figure>
@@ -394,17 +372,17 @@ footer .label a:hover{color:var(--ink)}
 <!-- ── SÉRIE 03 (à venir) ── -->
 <section class="series reveal" id="serie-03">
   <div class="series-head">
-    <div class="top-line"><span class="snum">03</span><h2>Petit <em>inventaire</em></h2></div>
-    <p class="desc">Les objets du quotidien sur Kodak Portra — Canon AE-1, lumière naturelle, poses lentes. Série en cours de tirage.</p>
+    <div class="top-line"><span class="snum">03</span><h2 data-edit="s03.h2">Petit <em>inventaire</em></h2></div>
+    <p class="desc" data-edit="s03.desc">Les objets du quotidien sur Kodak Portra — Canon AE-1, lumière naturelle, poses lentes. Série en cours de tirage.</p>
     <div class="series-table">
-      <div class="cell"><div class="k">Pellicule</div><div class="v">Kodak Portra 400</div></div>
-      <div class="cell"><div class="k">Boîtier</div><div class="v">Canon AE-1</div></div>
-      <div class="cell"><div class="k">Lieu</div><div class="v">Intérieurs</div></div>
-      <div class="cell"><div class="k">Statut</div><div class="v">À venir</div></div>
+      <div class="cell"><div class="k">Pellicule</div><div class="v" data-edit="s03.t0">Kodak Portra 400</div></div>
+      <div class="cell"><div class="k">Boîtier</div><div class="v" data-edit="s03.t1">Canon AE-1</div></div>
+      <div class="cell"><div class="k">Lieu</div><div class="v" data-edit="s03.t2">Intérieurs</div></div>
+      <div class="cell"><div class="k">Statut</div><div class="v" data-edit="s03.t3">À venir</div></div>
     </div>
   </div>
   <p class="empty-note">Les tirages de cette série ne sont pas encore en ligne.</p>
-  <div class="plates">
+  <div class="plates" data-series="03">
     <div class="empty-plate"><span class="label">03 — en cours</span></div>
     <div class="empty-plate"><span class="label">Portra 400</span></div>
     <div class="empty-plate"><span class="label">Canon AE-1</span></div>
@@ -415,17 +393,17 @@ footer .label a:hover{color:var(--ink)}
 <!-- ── SÉRIE 04 (à venir) ── -->
 <section class="series reveal" id="serie-04">
   <div class="series-head">
-    <div class="top-line"><span class="snum">04</span><h2>Sans <em>titre</em></h2></div>
-    <p class="desc">Ilford Delta 3200 poussée à l'extrême, Olympus OM-1, la nuit pour matière. Le grain devient texture. Série en cours.</p>
+    <div class="top-line"><span class="snum">04</span><h2 data-edit="s04.h2">Sans <em>titre</em></h2></div>
+    <p class="desc" data-edit="s04.desc">Ilford Delta 3200 poussée à l'extrême, Olympus OM-1, la nuit pour matière. Le grain devient texture. Série en cours.</p>
     <div class="series-table">
-      <div class="cell"><div class="k">Pellicule</div><div class="v">Ilford Delta 3200</div></div>
-      <div class="cell"><div class="k">Boîtier</div><div class="v">Olympus OM-1</div></div>
-      <div class="cell"><div class="k">Lieu</div><div class="v">Variable</div></div>
-      <div class="cell"><div class="k">Statut</div><div class="v">À venir</div></div>
+      <div class="cell"><div class="k">Pellicule</div><div class="v" data-edit="s04.t0">Ilford Delta 3200</div></div>
+      <div class="cell"><div class="k">Boîtier</div><div class="v" data-edit="s04.t1">Olympus OM-1</div></div>
+      <div class="cell"><div class="k">Lieu</div><div class="v" data-edit="s04.t2">Variable</div></div>
+      <div class="cell"><div class="k">Statut</div><div class="v" data-edit="s04.t3">À venir</div></div>
     </div>
   </div>
   <p class="empty-note">Les tirages de cette série ne sont pas encore en ligne.</p>
-  <div class="plates">
+  <div class="plates" data-series="04">
     <div class="empty-plate"><span class="label">04 — en cours</span></div>
     <div class="empty-plate"><span class="label">Delta 3200</span></div>
     <div class="empty-plate"><span class="label">EI 3200</span></div>
@@ -437,15 +415,15 @@ footer .label a:hover{color:var(--ink)}
 <section class="about reveal" id="about">
   <div class="about-grid">
     <div>
-      <h3>Je photographie ce qui ne se rejoue pas.</h3>
-      <p style="margin-top:28px">Argentique uniquement, depuis 2022. Une pellicule par lieu, une lumière par série. <b>Le scan est la seule étape numérique</b> — pas de retouche, pas de recadrage après coup.</p>
-      <p>Tirages disponibles sur demande. Pour une collaboration, un projet d'édition ou simplement parler argentique, écris-moi.</p>
+      <h3 data-edit="about.h3">Je photographie ce qui ne se rejoue pas.</h3>
+      <p style="margin-top:28px" data-edit="about.p1">Argentique uniquement, depuis 2022. Une pellicule par lieu, une lumière par série. <b>Le scan est la seule étape numérique</b> — pas de retouche, pas de recadrage après coup.</p>
+      <p data-edit="about.p2">Tirages disponibles sur demande. Pour une collaboration, un projet d'édition ou simplement parler argentique, écris-moi.</p>
     </div>
     <div class="contact">
-      <a class="c-link" href="mailto:raphael@exemple.fr"><span class="k">Email</span><span class="v">raphael@exemple.fr</span></a>
-      <a class="c-link" href="#"><span class="k">Instagram</span><span class="v">@raphael.argentique</span></a>
-      <a class="c-link" href="#"><span class="k">Tirages</span><span class="v">Sur demande</span></a>
-      <span class="c-link"><span class="k">Localisation</span><span class="v">Chaumont — Grand Est, FR</span></span>
+      <a class="c-link" href="mailto:raphael@exemple.fr"><span class="k">Email</span><span class="v" data-edit="contact.email">raphael@exemple.fr</span></a>
+      <a class="c-link" href="#"><span class="k">Instagram</span><span class="v" data-edit="contact.instagram">@raphael.argentique</span></a>
+      <a class="c-link" href="#"><span class="k">Tirages</span><span class="v" data-edit="contact.tirages">Sur demande</span></a>
+      <span class="c-link"><span class="k">Localisation</span><span class="v" data-edit="contact.loc">Chaumont — Grand Est, FR</span></span>
     </div>
   </div>
 </section>
@@ -466,30 +444,113 @@ footer .label a:hover{color:var(--ink)}
 </div>
 
 <script>
-// reveal au scroll
+// ── reveal au scroll ──
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}}),{threshold:.08});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-// fade-in images
+// ── fade-in images (observe aussi les images ajoutées) ──
 const iio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const im=e.target;if(im.complete)im.classList.add('in');else im.addEventListener('load',()=>im.classList.add('in'),{once:true});iio.unobserve(im);}}),{rootMargin:'120px'});
-document.querySelectorAll('.plate img').forEach(im=>iio.observe(im));
+function observeImages(root){ (root||document).querySelectorAll('.plate img:not([data-obs])').forEach(im=>{im.setAttribute('data-obs','1');iio.observe(im);}); }
+observeImages();
 
-// lightbox
+// ── lightbox (délégation : marche pour les photos réordonnées/ajoutées) ──
 const lb=document.getElementById('lb'),lbImg=document.getElementById('lb-img'),lbCap=document.getElementById('lb-cap');
-const figs=[...document.querySelectorAll('figure[data-full]')];
 let idx=0;
-function show(i){idx=(i+figs.length)%figs.length;const f=figs[idx];lbImg.src=f.dataset.full;lbImg.alt=f.querySelector('img').alt;lbCap.textContent=f.dataset.cap||'';}
-function open(f){show(figs.indexOf(f));lb.classList.add('open');document.body.style.overflow='hidden';}
-function close(){lb.classList.remove('open');document.body.style.overflow='';}
-figs.forEach(f=>f.addEventListener('click',()=>open(f)));
-document.getElementById('lb-x').onclick=close;
+function figList(){ return [...document.querySelectorAll('figure[data-full]')].filter(f=>f.offsetParent!==null); }
+function show(i){const figs=figList();if(!figs.length)return;idx=(i+figs.length)%figs.length;const f=figs[idx];lbImg.src=f.dataset.full;lbImg.alt=(f.querySelector('img')||{}).alt||'';lbCap.textContent=f.dataset.cap||'';}
+function openFig(f){const figs=figList();show(figs.indexOf(f));lb.classList.add('open');document.body.style.overflow='hidden';}
+function closeLb(){lb.classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('click',e=>{const f=e.target.closest('figure[data-full]');if(f && !lb.contains(f)){openFig(f);}});
+document.getElementById('lb-x').onclick=closeLb;
 document.getElementById('lb-prev').onclick=e=>{e.stopPropagation();show(idx-1);};
 document.getElementById('lb-next').onclick=e=>{e.stopPropagation();show(idx+1);};
-lb.addEventListener('click',e=>{if(e.target===lb)close();});
-document.addEventListener('keydown',e=>{if(!lb.classList.contains('open'))return;if(e.key==='Escape')close();if(e.key==='ArrowLeft')show(idx-1);if(e.key==='ArrowRight')show(idx+1);});
-// swipe mobile
+lb.addEventListener('click',e=>{if(e.target===lb)closeLb();});
+document.addEventListener('keydown',e=>{if(!lb.classList.contains('open'))return;if(e.key==='Escape')closeLb();if(e.key==='ArrowLeft')show(idx-1);if(e.key==='ArrowRight')show(idx+1);});
 let tx=0;lb.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
 lb.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)show(d<0?idx+1:idx-1);},{passive:true});
+
+// ── chargement des modifications faites dans l'Atelier (Firestore) ──
+const FB_CONFIG={apiKey:"AIzaSyBp5tIsUWR2rtazPpsD-T1PBUl0KdZ-MBQ",authDomain:"atelier-raphael.firebaseapp.com",projectId:"atelier-raphael",storageBucket:"atelier-raphael.firebasestorage.app",messagingSenderId:"610134831747",appId:"1:610134831747:web:199cbd4451906e8f27a1b6"};
+
+function plateTemplate(ph){
+  const d=document.createElement('div');
+  d.className='plate'+(ph.feature?' feature':'');
+  d.dataset.img=ph.img;
+  const src=ph.full||('images/'+ph.img);
+  d.innerHTML=`<figure data-full="${src}" data-cap="${(ph.label||'').replace(/"/g,'&quot;')}">
+    <img loading="lazy" decoding="async" src="${src}" alt="${(ph.title||'').replace(/"/g,'&quot;')}">
+    <figcaption><span class="title">${ph.title||''}</span><span class="label">${ph.label||''}</span></figcaption>
+  </figure>`;
+  return d;
+}
+function applySite(ov, imgMap){
+  if(!ov) return;
+  // textes
+  if(ov.texts){ for(const k in ov.texts){ const el=document.querySelector(`[data-edit="${k}"]`); if(el)el.innerHTML=ov.texts[k]; } }
+  // lien email
+  if(ov.texts && ov.texts['contact.email']){ const a=document.querySelector('[data-edit="contact.email"]')?.closest('a'); if(a)a.href='mailto:'+ov.texts['contact.email'].trim(); }
+  // photos par série
+  if(ov.series){
+    for(const sid in ov.series){
+      const cont=document.querySelector(`.plates[data-series="${sid}"]`); if(!cont)continue;
+      const list=ov.series[sid]; if(!Array.isArray(list))continue;
+      // retirer les empty-plates si on a des vraies photos
+      if(list.some(p=>!p.hidden)) cont.querySelectorAll('.empty-plate').forEach(n=>n.remove());
+      const existing={}; cont.querySelectorAll('.plate[data-img]').forEach(n=>existing[n.dataset.img]=n);
+      const frag=document.createDocumentFragment();
+      list.forEach(ph=>{
+        if(ph.hidden)return;
+        let el=existing[ph.img];
+        if(!el){ const full=ph.full||(ph.upload?(imgMap[ph.img]||''):null); el=plateTemplate({...ph,full}); }
+        else {
+          el.classList.toggle('feature',!!ph.feature);
+          const t=el.querySelector('.title'),l=el.querySelector('.label');
+          if(t&&ph.title!=null)t.textContent=ph.title;
+          if(l&&ph.label!=null){l.textContent=ph.label; const fg=el.querySelector('figure'); if(fg)fg.dataset.cap=ph.label;}
+        }
+        frag.appendChild(el);
+      });
+      // masquer celles non listées
+      Object.values(existing).forEach(n=>{ if(!list.find(p=>p.img===n.dataset.img && !p.hidden)) n.remove(); });
+      cont.appendChild(frag);
+      observeImages(cont);
+    }
+  }
+  // recompter les vues dans le sommaire
+  document.querySelectorAll('.plates[data-series]').forEach(c=>{
+    const sid=c.dataset.series; const n=c.querySelectorAll('.plate[data-img]').length;
+    const row=document.querySelector(`a.row[href="#serie-${sid}"] .meta`);
+    if(row && n>0){
+      const nn=String(n).padStart(2,'0')+' vues';
+      if(/\d+\s*vues?/.test(row.textContent)) row.textContent=row.textContent.replace(/\d+\s*vues?/, nn);
+    }
+  });
+}
+(function loadSite(){
+  function go(){
+    if(!window.firebase){ return; }
+    try{
+      firebase.initializeApp(FB_CONFIG);
+      const db=firebase.firestore();
+      db.collection('site').doc('home').get().then(async snap=>{
+        if(!snap.exists)return;
+        const ov=snap.data();
+        let parsed=ov.json?JSON.parse(ov.json):ov;
+        // charger les images uploadées référencées (upload:true)
+        const need=new Set();
+        if(parsed.series)for(const s in parsed.series)(parsed.series[s]||[]).forEach(p=>{if(p.upload&&!p.full&&!p.hidden)need.add(p.img);});
+        const imgMap={};
+        if(need.size){
+          const col=db.collection('site').doc('home').collection('imgs');
+          const snaps=await Promise.all([...need].map(id=>col.doc(id).get().catch(()=>null)));
+          snaps.forEach(sn=>{ if(sn&&sn.exists)imgMap[sn.id]=sn.data().src; });
+        }
+        applySite(parsed,imgMap);
+      }).catch(()=>{});
+    }catch(e){}
+  }
+  if(document.readyState!=='loading')setTimeout(go,0); else window.addEventListener('DOMContentLoaded',go);
+})();
 </script>
 </body>
 </html>

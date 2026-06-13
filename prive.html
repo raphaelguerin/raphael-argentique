@@ -162,6 +162,37 @@ body.connecting .card{cursor:crosshair}
 .gal-item .gdel{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(244,244,241,.92);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:14px;opacity:0;transition:opacity .2s}
 .gal-item:hover .gdel{opacity:1}
 @media(hover:none){.gal-item .gdel{opacity:1}}
+
+/* ── éditeur de site ── */
+#siteedit{flex:1 1 auto;overflow:auto;display:none;padding:clamp(18px,4vw,40px);padding-bottom:calc(60px + var(--safe-b));-webkit-overflow-scrolling:touch;max-width:920px;margin:0 auto;width:100%}
+#siteedit.on{display:block}
+.se-sec{margin:0 0 34px;border:1px solid var(--hair);background:var(--mat)}
+.se-sec>.se-h{padding:13px 16px;border-bottom:1px solid var(--hair);background:var(--tab);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);display:flex;align-items:center;justify-content:space-between}
+.se-body{padding:16px}
+.se-field{margin:0 0 16px}
+.se-field:last-child{margin-bottom:0}
+.se-field label{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin-bottom:6px}
+.se-field .ed{border:1px solid var(--hair);background:var(--paper);padding:10px 12px;font-size:14px;line-height:1.5;color:var(--ink);outline:none;min-height:20px;font-family:var(--ui)}
+.se-field .ed:focus{border-color:var(--ink);background:var(--mat)}
+.se-field .ed.disp{font-family:var(--disp);font-weight:300;font-size:20px}
+.se-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.se-grid2{grid-template-columns:1fr}}
+.se-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-top:6px}
+.se-ph{position:relative;border:1px solid var(--hair);background:var(--paper);cursor:grab;touch-action:none}
+.se-ph.drag{opacity:.4}
+.se-ph.over{outline:2px solid var(--ink);outline-offset:2px}
+.se-ph img{width:100%;height:100px;object-fit:cover;display:block;background:var(--tab)}
+.se-ph.hidden img{filter:grayscale(1);opacity:.35}
+.se-ph .cap{font-size:10px;color:var(--ash);padding:6px 7px;line-height:1.35;border-top:1px solid var(--hair)}
+.se-ph .cap b{display:block;color:var(--ink);font-style:italic;font-family:var(--disp);font-weight:300;font-size:13px}
+.se-ph .ops{position:absolute;top:5px;right:5px;display:flex;gap:4px}
+.se-ph .ops button{width:26px;height:26px;border-radius:50%;background:rgba(244,244,241,.94);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink);box-shadow:0 2px 8px -3px rgba(0,0,0,.4)}
+.se-ph .ops button:active{background:var(--ink);color:var(--paper)}
+.se-ph .feat{position:absolute;top:5px;left:5px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:3px 6px}
+.se-addrow{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.se-note{font-size:12px;color:var(--ash);line-height:1.6;margin-top:8px}
+.se-banner{position:sticky;top:0;z-index:5;background:#eef3ec;border:1px solid #c8dcc4;color:#3a5a36;font-size:12px;padding:9px 14px;margin-bottom:18px;display:none}
+.se-banner.on{display:block}
 /* sélecteur album (reprend le style boardsel) */
 .albumsel{flex:0 0 auto;display:flex;align-items:center;gap:7px;border:1px solid var(--hair);background:var(--mat);border-radius:2px;padding:0 4px 0 12px;position:relative}
 .albumsel .an{font-family:var(--disp);font-size:16px;font-weight:300;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 0}
@@ -240,6 +271,7 @@ body.connecting .card{cursor:crosshair}
       <div class="tabs">
         <button class="tabbtn on" data-tab="boards">Tableaux</button>
         <button class="tabbtn" data-tab="gallery">Galerie</button>
+        <button class="tabbtn" data-tab="site">Site</button>
       </div>
     </div>
     <div class="right">
@@ -272,9 +304,20 @@ body.connecting .card{cursor:crosshair}
       <button class="cv" id="album-menu-btn">▼</button>
       <div class="amenu" id="album-menu"></div>
     </div>
+    <button class="tool" id="gal-all">⊞ Toutes</button>
+    <button class="tool" id="gal-shuffle" title="Mélanger">⤮ Mélanger</button>
+    <button class="tool" id="gal-sort" title="Trier par date">↧ Par date</button>
     <span class="spacer"></span>
     <button class="tool" id="gal-add"><span class="plus">+</span> Ajouter</button>
     <span class="label" id="gal-count"></span>
+  </div>
+
+  <!-- sous-barre SITE -->
+  <div class="subbar" id="subbar-site" style="display:none">
+    <span class="bn" style="font-family:var(--disp);font-size:16px;font-weight:300;padding:7px 4px">Page d'accueil</span>
+    <span class="spacer"></span>
+    <a class="tool ghost" href="index.html" target="_blank" rel="noopener">↗ Aperçu</a>
+    <button class="tool" id="site-save">Publier les modifications</button>
   </div>
 
   <!-- VUE TABLEAUX -->
@@ -290,6 +333,9 @@ body.connecting .card{cursor:crosshair}
 
   <!-- VUE GALERIE -->
   <div id="gallery"></div>
+
+  <!-- VUE SITE (éditeur) -->
+  <div id="siteedit"></div>
 </div>
 
 <!-- PICKER -->
@@ -695,13 +741,16 @@ document.getElementById('clear-board').addEventListener('click',()=>{ if(confirm
 /* ── onglets ── */
 function setTab(tab){
   document.querySelectorAll('.tabbtn').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
-  const boards=tab==='boards';
+  const boards=tab==='boards', gallery=tab==='gallery', site=tab==='site';
   document.getElementById('subbar-boards').style.display=boards?'flex':'none';
-  document.getElementById('subbar-gallery').style.display=boards?'none':'flex';
+  document.getElementById('subbar-gallery').style.display=gallery?'flex':'none';
+  document.getElementById('subbar-site').style.display=site?'flex':'none';
   viewport.style.display=boards?'block':'none';
   document.getElementById('zoomctl').classList.toggle('hide',!boards);
-  document.getElementById('gallery').classList.toggle('on',!boards);
-  if(!boards)renderGallery();
+  document.getElementById('gallery').classList.toggle('on',gallery);
+  document.getElementById('siteedit').classList.toggle('on',site);
+  if(gallery)renderGallery();
+  if(site)renderSiteEditor();
 }
 document.querySelectorAll('.tabbtn').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
 
@@ -730,29 +779,58 @@ document.getElementById('album-menu-btn').addEventListener('click',toggleAlbumMe
 document.getElementById('album-name').addEventListener('click',toggleAlbumMenu);
 document.addEventListener('click',e=>{ if(!e.target.closest('.albumsel'))albumMenu.classList.remove('on'); });
 
+/* état d'affichage galerie */
+let galView={all:false, sort:'manual'}; // sort: 'manual' | 'date' | 'shuffle'
+let galCurrent=[];                       // liste actuellement affichée (pour la lightbox)
+function allImages(){
+  const out=[];
+  (state.albums||[]).forEach(a=>(a.images||[]).forEach(g=>out.push(Object.assign({_album:a.name},g))));
+  return out;
+}
+function sortedList(imgs){
+  let arr=imgs.slice();
+  if(galView.sort==='date') arr.sort((a,b)=>(b.added||0)-(a.added||0));
+  else if(galView.sort==='shuffle'){ for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} }
+  return arr;
+}
 function renderGallery(){
-  const al=activeAlbumObj(); const imgs=al?al.images||[]:[];
-  document.getElementById('gal-count').textContent=imgs.length+" image"+(imgs.length!==1?"s":"");
+  // synchro de l'UI des boutons
+  document.getElementById('gal-all').classList.toggle('on',galView.all);
+  document.getElementById('gal-shuffle').classList.toggle('on',galView.sort==='shuffle');
+  document.getElementById('gal-sort').classList.toggle('on',galView.sort==='date');
+  document.querySelector('#subbar-gallery .albumsel').style.display=galView.all?'none':'flex';
+
+  const base=galView.all?allImages():((activeAlbumObj()||{}).images||[]);
+  galCurrent=sortedList(base);
+  const imgs=galCurrent;
+  document.getElementById('gal-count').textContent=imgs.length+" image"+(imgs.length!==1?"s":"")+(galView.all?" · tous albums":"");
   galEl.innerHTML='';
-  if(!imgs.length){ galEl.innerHTML='<div class="gal-empty">Album vide.<br>Ajoute des images depuis l\'appareil, les séries du site, ou une adresse.</div>'; return; }
+  if(!imgs.length){ galEl.innerHTML='<div class="gal-empty">'+(galView.all?'Aucune image dans aucun album.':'Album vide.<br>Ajoute des images depuis l\'appareil, les séries du site, ou une adresse.')+'</div>'; return; }
   const grid=document.createElement('div'); grid.className='gal-grid';
   imgs.forEach((g,i)=>{
     const fig=document.createElement('div'); fig.className='gal-item';
-    fig.innerHTML=`<img alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
+    fig.innerHTML=`<img alt=""><button class="gdel">✕</button>${(g.cap||g._album)?`<div class="gcap">${escapeHtml(g.cap||g._album)}</div>`:''}`;
     resolveImgEl(fig.querySelector('img'), g.src, g._imgRef);
     fig.querySelector('img').addEventListener('click',()=>openGlb(i));
-    fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation(); al.images=al.images.filter(x=>x.id!==g.id); renderGallery(); save(); });
+    fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation();
+      // supprimer dans le bon album (mode toutes inclus)
+      (state.albums||[]).forEach(a=>{ a.images=(a.images||[]).filter(x=>x.id!==g.id); });
+      renderGallery(); save();
+    });
     grid.appendChild(fig);
   });
   galEl.appendChild(grid);
 }
 document.getElementById('gal-add').addEventListener('click',openPickerGallery);
+document.getElementById('gal-all').addEventListener('click',()=>{ galView.all=!galView.all; renderGallery(); });
+document.getElementById('gal-shuffle').addEventListener('click',()=>{ galView.sort=galView.sort==='shuffle'?'manual':'shuffle'; renderGallery(); });
+document.getElementById('gal-sort').addEventListener('click',()=>{ galView.sort=galView.sort==='date'?'manual':'date'; renderGallery(); });
 
 /* lightbox galerie */
 let glbI=0;
 function openGlb(i){ glbI=i; showGlb(); document.getElementById('glb').classList.add('on'); }
-function showGlb(){ const al=activeAlbumObj(); const g=(al&&al.images||[])[glbI]; if(!g)return; const im=document.getElementById('glb-img'); im.src=''; resolveImgEl(im,g.src,g._imgRef); }
-function glbStep(d){ const al=activeAlbumObj(); const n=(al&&al.images||[]).length; if(!n)return; glbI=(glbI+d+n)%n; showGlb(); }
+function showGlb(){ const g=galCurrent[glbI]; if(!g)return; const im=document.getElementById('glb-img'); im.src=''; resolveImgEl(im,g.src,g._imgRef); }
+function glbStep(d){ const n=galCurrent.length; if(!n)return; glbI=(glbI+d+n)%n; showGlb(); }
 document.getElementById('glb-x').onclick=()=>document.getElementById('glb').classList.remove('on');
 document.getElementById('glb-prev').onclick=()=>glbStep(-1);
 document.getElementById('glb-next').onclick=()=>glbStep(1);
@@ -769,7 +847,17 @@ function openPickerCard(it){ pickMode='card'; pickTarget=it; document.getElement
 function openPickerGallery(){ pickMode='gallery'; pickTarget=null; document.getElementById('pk-title').textContent="Ajouter à l'album"; picker.classList.add('on'); }
 function closePicker(){ picker.classList.remove('on'); document.getElementById('pk-input').value=''; }
 function chooseImage(src,cap){
-  if(pickMode==='gallery'){ const al=activeAlbumObj(); if(al){ al.images=al.images||[]; al.images.unshift({id:uid8('g'),src,cap:cap||""}); renderGallery(); save(); flash("Ajoutée à l'album"); } }
+  if(pickMode==='site'){
+    const ov=siteWorking(); const sid=pickSiteSid;
+    // src est "images/img_xxxx.jpg" → on garde le nom de fichier
+    const fn=src.replace(/^images\//,'');
+    const upload=/^https?:/.test(src);
+    ov.series[sid]=ov.series[sid]||[];
+    ov.series[sid].push(upload?{img:src,upload:true,full:src,title:"",label:cap||"",feature:false,hidden:false}
+                               :{img:fn,upload:false,title:"",label:cap||"",feature:false,hidden:false});
+    markSiteDirty(); renderSeriesGrid(sid); flash("Ajoutée à la série"); closePicker(); return;
+  }
+  if(pickMode==='gallery'){ const al=activeAlbumObj(); if(al){ al.images=al.images||[]; al.images.unshift({id:uid8('g'),src,cap:cap||"",added:Date.now()}); renderGallery(); save(); flash("Ajoutée à l'album"); } }
   else if(pickTarget){ pickTarget.data.src=src; pickTarget.data.cap=cap||""; renderCard(pickTarget); drawLinks(); save(); }
   closePicker();
 }
@@ -786,7 +874,7 @@ async function handleFiles(list){
   let first=true,k=0;
   for(const f of files){
     try{ const data=await fileToDataURL(f); const src=await materialize(data);
-      if(pickMode==='gallery'){ const al=activeAlbumObj(); if(al){ al.images=al.images||[]; al.images.unshift({id:uid8('g'),src,cap:""}); } }
+      if(pickMode==='gallery'){ const al=activeAlbumObj(); if(al){ al.images=al.images||[]; al.images.unshift({id:uid8('g'),src,cap:"",added:Date.now()}); } }
       else if(first&&pickTarget){ pickTarget.data.src=src;pickTarget.data.cap="";renderCard(pickTarget);drawLinks();first=false; }
       else { const it=add('image',{data:{src,cap:""}},true); it.x+=k*30;it.y+=k*30;renderCard(it); }
       k++;
@@ -798,6 +886,223 @@ async function handleFiles(list){
 const pkFile=document.getElementById('pk-file');
 document.getElementById('pk-file-btn').addEventListener('click',()=>pkFile.click());
 pkFile.addEventListener('change',e=>{ handleFiles(e.target.files); e.target.value=""; });
+
+
+/* ════════════════ ÉDITEUR DE SITE (page d'accueil) ════════════════ */
+const SITE_DEFAULT = {"texts": {"hero.eyebrow": "Photographies — 2022 / 2026", "hero.h1": "Le grain, la lumière,<br>et <em>rien d'autre.</em>", "hero.lede": "Quatre séries au <b>35&nbsp;mm</b>, tirées du temps long. Boîtier hérité, pellicule choisie, aucune retouche numérique au-delà du scan. De la <b>neige de Font-Romeu</b> au <b>sel d'Hossegor</b>.", "about.h3": "Je photographie ce qui ne se rejoue pas.", "about.p1": "Argentique uniquement, depuis 2022. Une pellicule par lieu, une lumière par série. <b>Le scan est la seule étape numérique</b> — pas de retouche, pas de recadrage après coup.", "about.p2": "Tirages disponibles sur demande. Pour une collaboration, un projet d'édition ou simplement parler argentique, écris-moi.", "s01.h2": "Neige <em>noire</em>", "s01.desc": "Une semaine à Font-Romeu, l'hiver tombé sur les Pyrénées. Ilford HP5+, contraste fermé : la neige cesse d'être blanche, le ciel se fait métal. Huit vues d'un même froid.", "s01.t0": "Ilford HP5+ 400", "s01.t1": "Olympus mju III", "s01.t2": "Font-Romeu, FR", "s01.t3": "Hiver 2026", "s01.t4": "08 / 36", "s02.h2": "Hossegor, <em>19&nbsp;h</em>", "s02.desc": "La côte landaise quand le soleil tombe. Kodak UltraMax poussée à fond, couleurs saturées, grain franc. La ville, la plage, puis l'or sur l'eau — dix-sept vues d'une même heure qui s'étire.", "s02.t0": "Kodak UltraMax 400", "s02.t1": "Olympus mju III", "s02.t2": "Hossegor, FR", "s02.t3": "Été 2025", "s02.t4": "17 / 24", "s03.h2": "Petit <em>inventaire</em>", "s03.desc": "Les objets du quotidien sur Kodak Portra — Canon AE-1, lumière naturelle, poses lentes. Série en cours de tirage.", "s03.t0": "Kodak Portra 400", "s03.t1": "Canon AE-1", "s03.t2": "Intérieurs", "s03.t3": "À venir", "s04.h2": "Sans <em>titre</em>", "s04.desc": "Ilford Delta 3200 poussée à l'extrême, Olympus OM-1, la nuit pour matière. Le grain devient texture. Série en cours.", "s04.t0": "Ilford Delta 3200", "s04.t1": "Olympus OM-1", "s04.t2": "Variable", "s04.t3": "À venir", "contact.email": "raphael@exemple.fr", "contact.instagram": "@raphael.argentique", "contact.tirages": "Sur demande", "contact.loc": "Chaumont — Grand Est, FR"}, "series": {"01": [{"img": "img_5825.jpg", "title": "Ligne de crête", "label": "01.01 · HP5+ 400", "feature": true}, {"img": "img_5827.jpg", "title": "Massif, contre-jour", "label": "01.02 · HP5+ 400", "feature": false}, {"img": "img_5841.jpg", "title": "Sous le pin", "label": "01.03 · HP5+ 400", "feature": false}, {"img": "img_5829.jpg", "title": "Forêt, brume basse", "label": "01.04 · HP5+ 400", "feature": false}, {"img": "img_5828.jpg", "title": "File d'attente", "label": "01.05 · HP5+ 400", "feature": false}, {"img": "img_5833.jpg", "title": "Le chalet", "label": "01.06 · HP5+ 400", "feature": false}, {"img": "img_5835.jpg", "title": "Vallée ouverte", "label": "01.07 · HP5+ 400", "feature": true}, {"img": "img_5839.jpg", "title": "Versant nord", "label": "01.08 · HP5+ 400", "feature": true}], "02": [{"img": "img_3859.jpg", "title": "La ville sur l'eau", "label": "02.01 · UltraMax 400", "feature": true}, {"img": "img_3861.jpg", "title": "Front de mer", "label": "02.02 · UltraMax 400", "feature": false}, {"img": "img_3863.jpg", "title": "Accroupi, sable chaud", "label": "02.03 · UltraMax 400", "feature": false}, {"img": "img_3867.jpg", "title": "Ciel rose, marée basse", "label": "02.04 · UltraMax 400", "feature": false}, {"img": "img_3893.jpg", "title": "Bouée", "label": "02.05 · UltraMax 400", "feature": false}, {"img": "img_3868.jpg", "title": "Le port", "label": "02.06 · UltraMax 400", "feature": false}, {"img": "img_3870.jpg", "title": "Pins, place du soir", "label": "02.07 · UltraMax 400", "feature": false}, {"img": "img_3872.jpg", "title": "Bain, fin d'après-midi", "label": "02.08 · UltraMax 400", "feature": false}, {"img": "img_3885.jpg", "title": "Reflets, 19 h", "label": "02.09 · UltraMax 400", "feature": true}, {"img": "img_3874.jpg", "title": "Façades dorées", "label": "02.10 · UltraMax 400", "feature": false}, {"img": "img_3876.jpg", "title": "Le dernier bain", "label": "02.11 · UltraMax 400", "feature": false}, {"img": "img_3883.jpg", "title": "Kayaks", "label": "02.12 · UltraMax 400", "feature": false}, {"img": "img_3880.jpg", "title": "Soleil bas (vertical)", "label": "02.13 · UltraMax 400", "feature": false}, {"img": "img_3869.jpg", "title": "Deux silhouettes", "label": "02.14 · UltraMax 400", "feature": true}, {"img": "img_3887.jpg", "title": "Or sur l'eau", "label": "02.15 · UltraMax 400", "feature": false}, {"img": "img_3889.jpg", "title": "Nuage, couchant", "label": "02.16 · UltraMax 400", "feature": false}, {"img": "img_3891.jpg", "title": "Dernière lumière", "label": "02.17 · UltraMax 400", "feature": true}], "03": [], "04": []}};
+const SITE_TEXT_LABELS = {
+  "hero.eyebrow":"Sur-titre","hero.h1":"Titre principal","hero.lede":"Accroche",
+  "about.h3":"Titre — À propos","about.p1":"À propos — paragraphe 1","about.p2":"À propos — paragraphe 2",
+  "contact.email":"Email","contact.instagram":"Instagram","contact.tirages":"Tirages","contact.loc":"Localisation",
+  "h2":"Titre de la série","desc":"Description","t0":"Pellicule","t1":"Boîtier","t2":"Lieu","t3":"Période / Statut","t4":"Sélection"
+};
+const SERIES_NAMES = {"01":"Série 01","02":"Série 02","03":"Série 03","04":"Série 04"};
+
+let siteOv=null;            // overrides chargés (Firestore site/home)
+let siteDirty=false;        // modifications non publiées
+const siteImgCache=new Map(); // id upload -> dataURL
+const siteImgNew=new Map();   // id upload -> dataURL à écrire à la publication
+
+function siteDocRef(){ return firebase.firestore().collection('site').doc('home'); }
+function siteImgsCol(){ return siteDocRef().collection('imgs'); }
+
+/* construit l'état de travail : défaut fusionné avec overrides */
+function siteWorking(){
+  if(!siteOv){
+    siteOv={ texts:JSON.parse(JSON.stringify(SITE_DEFAULT.texts)),
+             series:JSON.parse(JSON.stringify(SITE_DEFAULT.series)) };
+  }
+  // garantir toutes les séries
+  ['01','02','03','04'].forEach(s=>{ if(!Array.isArray(siteOv.series[s])) siteOv.series[s]=JSON.parse(JSON.stringify(SITE_DEFAULT.series[s]||[])); });
+  if(!siteOv.texts) siteOv.texts={};
+  return siteOv;
+}
+
+async function loadSiteOv(){
+  try{
+    const snap=await siteDocRef().get();
+    if(snap.exists){ const d=snap.data(); siteOv = d.json?JSON.parse(d.json):d; }
+  }catch(e){ /* lecture impossible : on partira du défaut */ }
+  if(!siteDirty && document.getElementById('siteedit').classList.contains('on')) renderSiteEditor();
+}
+
+function markSiteDirty(){ siteDirty=true; const b=document.getElementById('site-banner'); if(b)b.classList.add('on'); document.getElementById('site-save').classList.add('on'); }
+
+/* résout l'aperçu d'une photo dans l'éditeur (site image ou upload) */
+function setSitePhotoSrc(imgEl, ph){
+  if(ph.full){ imgEl.src=ph.full; return; }
+  if(ph.upload){
+    if(siteImgCache.has(ph.img)){ imgEl.src=siteImgCache.get(ph.img); return; }
+    siteImgsCol().doc(ph.img).get().then(sn=>{ const s=sn.exists?sn.data().src:''; siteImgCache.set(ph.img,s); if(s)imgEl.src=s; }).catch(()=>{});
+  } else { imgEl.src='images/'+ph.img; }
+}
+
+function renderSiteEditor(){
+  const root=document.getElementById('siteedit');
+  const ov=siteWorking();
+  root.innerHTML='';
+  const banner=document.createElement('div'); banner.className='se-banner'+(siteDirty?' on':''); banner.id='site-banner';
+  banner.textContent="Modifications non publiées — touche « Publier les modifications » pour les mettre en ligne.";
+  root.appendChild(banner);
+
+  // ── section TEXTES d'en-tête ──
+  root.appendChild(textSection("En-tête",[["hero.eyebrow",false],["hero.h1",true],["hero.lede",false]]));
+
+  // ── sections SÉRIES ──
+  ['01','02','03','04'].forEach(sid=>{
+    const sec=el('div','se-sec');
+    sec.appendChild(hRow(SERIES_NAMES[sid]+" — "+stripTags(ov.texts['s'+sid+'.h2']||'')));
+    const body=el('div','se-body');
+    body.appendChild(field("s"+sid+".h2","Titre de la série",true));
+    body.appendChild(field("s"+sid+".desc","Description",false,true));
+    // table values
+    const g=el('div','se-grid2');
+    const tkeys=Object.keys(ov.texts).filter(k=>k.startsWith('s'+sid+'.t'));
+    tkeys.forEach(k=>{ const lbl=SITE_TEXT_LABELS[k.split('.')[1]]||k; g.appendChild(field(k,lbl)); });
+    body.appendChild(g);
+    // photos
+    const ph=el('div'); ph.style.marginTop='10px';
+    const lab=el('label'); lab.textContent="Photos — glisse pour réordonner"; lab.style.cssText="display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin-bottom:6px"; ph.appendChild(lab);
+    ph.appendChild(photoGrid(sid));
+    const addrow=el('div','se-addrow');
+    const bUp=el('button','tool'); bUp.innerHTML='<span class="plus">+</span> Depuis l\'iPhone';
+    bUp.addEventListener('click',()=>siteUpload(sid));
+    const bSite=el('button','tool ghost'); bSite.textContent='Depuis les photos du site';
+    bSite.addEventListener('click',()=>siteAddFromPool(sid));
+    addrow.appendChild(bUp); addrow.appendChild(bSite);
+    ph.appendChild(addrow);
+    body.appendChild(ph);
+    sec.appendChild(body);
+    root.appendChild(sec);
+  });
+
+  // ── À propos + contact ──
+  root.appendChild(textSection("À propos",[["about.h3",true],["about.p1",false],["about.p2",false]]));
+  root.appendChild(textSection("Contact",[["contact.email",false],["contact.instagram",false],["contact.tirages",false],["contact.loc",false]]));
+
+  const note=el('div','se-note'); note.style.cssText="text-align:center;margin-top:8px";
+  note.innerHTML="Les modifications s'appliquent à la page d'accueil dès que tu les publies — visibles par tout le monde.";
+  root.appendChild(note);
+}
+
+/* helpers de construction */
+function el(t,c){ const e=document.createElement(t); if(c)e.className=c; return e; }
+function stripTags(s){ const d=document.createElement('div'); d.innerHTML=s||''; return d.textContent||''; }
+function hRow(txt){ const h=el('div','se-h'); h.innerHTML='<span>'+escapeHtml(txt)+'</span>'; return h; }
+function textSection(title,keys){
+  const sec=el('div','se-sec'); sec.appendChild(hRow(title));
+  const body=el('div','se-body');
+  keys.forEach(([k,disp])=>body.appendChild(field(k,SITE_TEXT_LABELS[k]||k,disp)));
+  sec.appendChild(body); return sec;
+}
+function field(key,label,disp,big){
+  const ov=siteWorking();
+  const f=el('div','se-field');
+  const l=el('label'); l.textContent=label; f.appendChild(l);
+  const ed=el('div','ed'+(disp?' disp':'')); ed.contentEditable=true;
+  if(big)ed.style.minHeight='70px';
+  ed.innerHTML=(ov.texts[key]!=null?ov.texts[key]:'');
+  ed.addEventListener('input',()=>{ ov.texts[key]=ed.innerHTML; markSiteDirty(); });
+  f.appendChild(ed); return f;
+}
+
+/* ── grille de photos d'une série, avec drag-reorder ── */
+function photoGrid(sid){
+  const ov=siteWorking();
+  const grid=el('div','se-photos'); grid.dataset.sid=sid;
+  (ov.series[sid]||[]).forEach((p,i)=>grid.appendChild(photoCell(sid,p,i)));
+  return grid;
+}
+function photoCell(sid,p,i){
+  const ov=siteWorking();
+  const c=el('div','se-ph'+(p.hidden?' hidden':'')); c.draggable=true; c.dataset.i=i;
+  const img=el('img'); setSitePhotoSrc(img,p); c.appendChild(img);
+  if(p.feature){ const fe=el('span','feat'); fe.textContent='Pleine largeur'; c.appendChild(fe); }
+  const ops=el('div','ops');
+  const eye=el('button'); eye.textContent=p.hidden?'◯':'⦿'; eye.title='Afficher/masquer';
+  eye.addEventListener('click',ev=>{ev.stopPropagation(); p.hidden=!p.hidden; markSiteDirty(); renderSeriesGrid(sid);});
+  const star=el('button'); star.textContent='▭'; star.title='Pleine largeur';
+  star.addEventListener('click',ev=>{ev.stopPropagation(); p.feature=!p.feature; markSiteDirty(); renderSeriesGrid(sid);});
+  const del=el('button'); del.textContent='✕'; del.title='Retirer';
+  del.addEventListener('click',ev=>{ev.stopPropagation(); ov.series[sid]=ov.series[sid].filter(x=>x!==p); markSiteDirty(); renderSeriesGrid(sid);});
+  ops.appendChild(eye); ops.appendChild(star); ops.appendChild(del); c.appendChild(ops);
+  const cap=el('div','cap');
+  cap.innerHTML='<b></b><span></span>';
+  cap.querySelector('b').textContent=p.title||'(sans titre)';
+  cap.querySelector('span').textContent=p.label||'';
+  c.appendChild(cap);
+  // édition titre/label au double-clic
+  c.addEventListener('dblclick',()=>{
+    const t=prompt("Titre de la photo",p.title||''); if(t!==null){p.title=t;}
+    const l=prompt("Légende (ex: 01.03 · HP5+ 400)",p.label||''); if(l!==null){p.label=l;}
+    markSiteDirty(); renderSeriesGrid(sid);
+  });
+  // drag & drop
+  c.addEventListener('dragstart',e=>{ c.classList.add('drag'); e.dataTransfer.setData('text/plain',i); e.dataTransfer.effectAllowed='move'; });
+  c.addEventListener('dragend',()=>c.classList.remove('drag'));
+  c.addEventListener('dragover',e=>{ e.preventDefault(); c.classList.add('over'); });
+  c.addEventListener('dragleave',()=>c.classList.remove('over'));
+  c.addEventListener('drop',e=>{ e.preventDefault(); c.classList.remove('over');
+    const from=+e.dataTransfer.getData('text/plain'), to=i;
+    if(from===to)return; const arr=ov.series[sid]; const [m]=arr.splice(from,1); arr.splice(to,0,m);
+    markSiteDirty(); renderSeriesGrid(sid);
+  });
+  // réordonnancement tactile (drag HTML5 ne marche pas sur iOS) : flèches
+  const moveRow=el('div'); moveRow.style.cssText='position:absolute;bottom:34px;left:5px;display:flex;gap:4px';
+  const mk=(txt,d)=>{ const b=el('button'); b.textContent=txt; b.style.cssText='width:24px;height:24px;border-radius:50%;background:rgba(244,244,241,.94);font-size:12px;box-shadow:0 2px 8px -3px rgba(0,0,0,.4)';
+    b.addEventListener('click',ev=>{ev.stopPropagation(); const arr=ov.series[sid]; const ni=i+d; if(ni<0||ni>=arr.length)return; [arr[i],arr[ni]]=[arr[ni],arr[i]]; markSiteDirty(); renderSeriesGrid(sid);}); return b; };
+  moveRow.appendChild(mk('‹',-1)); moveRow.appendChild(mk('›',1));
+  c.appendChild(moveRow);
+  return c;
+}
+function renderSeriesGrid(sid){
+  const old=document.querySelector('.se-photos[data-sid="'+sid+'"]');
+  if(old) old.replaceWith(photoGrid(sid));
+}
+
+/* ── ajout de photos ── */
+function siteAddFromPool(sid){
+  pickMode='site'; pickSiteSid=sid;
+  document.getElementById('pk-title').textContent="Ajouter à "+SERIES_NAMES[sid];
+  picker.classList.add('on');
+}
+let pickSiteSid=null;
+function siteUpload(sid){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.multiple=true;
+  inp.addEventListener('change',async e=>{
+    const files=[...e.target.files].filter(f=>f.type&&f.type.startsWith('image/'));
+    if(!files.length)return; flash("Import en cours…");
+    const ov=siteWorking();
+    for(const f of files){
+      try{ const data=await fileToDataURL(f,1400,0.8); const id='site_'+uid8('');
+        siteImgCache.set(id,data); siteImgNew.set(id,data);
+        ov.series[sid].push({img:id,upload:true,title:"",label:"",feature:false,hidden:false});
+      }catch(err){ flash("Une photo n'a pas pu être importée"); }
+    }
+    markSiteDirty(); renderSeriesGrid(sid); flash("Photo(s) ajoutée(s)");
+  });
+  inp.click();
+}
+
+/* ── publication ── */
+async function saveSite(){
+  if(!USE_FB){ flash("La publication nécessite la connexion Firebase."); return; }
+  const ov=siteWorking();
+  document.getElementById('saved').textContent="publication…";
+  try{
+    // 1) écrire les nouvelles images uploadées dans la sous-collection
+    for(const [id,src] of siteImgNew){ await siteImgsCol().doc(id).set({src}); }
+    siteImgNew.clear();
+    // 2) écrire le doc principal (texts + series), en JSON
+    await siteDocRef().set({ json:JSON.stringify(ov), ts:Date.now() },{merge:true});
+    siteDirty=false; const b=document.getElementById('site-banner'); if(b)b.classList.remove('on');
+    document.getElementById('site-save').classList.remove('on');
+    document.getElementById('saved').textContent=(USE_FB?"synchronisé":"enregistré");
+    flash("Page d'accueil mise à jour ✓");
+  }catch(e){ console.error(e); document.getElementById('saved').textContent="erreur publication"; flash("Publication impossible — vérifie les règles Firestore."); }
+}
+document.getElementById('site-save').addEventListener('click',saveSite);
+
 
 /* ── divers ── */
 function flash(m){ const h=document.getElementById('hint'); h.textContent=m; h.classList.add('show'); clearTimeout(h._t); h._t=setTimeout(()=>h.classList.remove('show'),2200); }
@@ -869,6 +1174,7 @@ async function startFB(){
     } else { state=defaultState(); persist(true); }
   }catch(e){ state=defaultState(); flash("Lecture impossible — vérifie les règles Firestore."); }
   bootUI();
+  loadSiteOv();
   setTimeout(()=>flash("Synchronisé. Pince pour zoomer · « Relier » pour des flèches"),700);
   // état initial : on ne télécharge PAS les images (paresseux). On garde juste le JSON.
   fbDoc.onSnapshot(snap=>{
