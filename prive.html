@@ -6,6 +6,13 @@
 <meta name="theme-color" content="#f4f4f1">
 <meta name="robots" content="noindex,nofollow">
 <title>Atelier — privé</title>
+
+<!-- ── PWA (installable, plein écran) ── -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Atelier">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,18..72,200;0,18..72,300;0,18..72,400;1,18..72,300&display=swap" rel="stylesheet">
@@ -1441,6 +1448,15 @@ if(USE_FB){
 } else {
   try{ if(sessionStorage.getItem('atelier_ok')==='1'){ gate.classList.add('hidden'); startLocal(); } else gatePass.focus(); }
   catch(e){ gatePass.focus(); }
+}
+</script>
+
+<!-- ── enregistrement du service worker PWA ── -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW non enregistré',e));
+  });
 }
 </script>
 </body>
