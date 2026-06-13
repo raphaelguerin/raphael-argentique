@@ -358,7 +358,13 @@ const KEY="atelier_raphael_v2", OLDKEY="atelier_raphael_v1";
 
 /* ── état ── */
 let state=null, uid=Date.now(), memoryOnly=false;
-function uid8(p){return (p||'')+(++uid).toString(36);}
+/* ID globalement unique : compteur local + aléa, pour qu'aucun appareil ne génère le même ID */
+function uid8(p){
+  let r;
+  try{ const a=new Uint32Array(2); crypto.getRandomValues(a); r=a[0].toString(36)+a[1].toString(36); }
+  catch(e){ r=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2); }
+  return (p||'')+(++uid).toString(36)+r.slice(0,8);
+}
 
 function defaultState(){
   const b=newBoard("Tableau principal");
@@ -452,25 +458,27 @@ async function saveImages(db,uid,s){
   if(!refs.length)return;
   await Promise.all(refs.map(r=>col.doc(r.id).set({src:r.obj[r.key]})));
 }
-async function loadImages(db,uid,s){
-  const col=db.collection('ateliers').doc(uid).collection('imgs');
-  const refs=new Set();
-  (s.boards||[]).forEach(b=>(b.items||[]).forEach(it=>{ if(it.data&&it.data._imgRef)refs.add(it.data._imgRef); }));
-  (s.albums||[]).forEach(al=>(al.images||[]).forEach(g=>{ if(g._imgRef)refs.add(g._imgRef); }));
-  if(!refs.size)return s;
-  const snaps=await Promise.all([...refs].map(id=>col.doc(id).get()));
-  const map={}; snaps.forEach(sn=>{ if(sn.exists)map[sn.id]=sn.data().src; });
-  (s.boards||[]).forEach(b=>(b.items||[]).forEach(it=>{
-    if(it.data&&it.data._imgRef){ it.data.src=map[it.data._imgRef]||''; delete it.data._imgRef; }
-  }));
-  (s.albums||[]).forEach(al=>{
-    al.images=(al.images||[]).map(g=>{
-      if(g._imgRef){ const{_imgRef,...rest}=g; return{...rest,src:map[_imgRef]||''}; }
-      return g;
-    });
-  });
-  return s;
+/* ── CACHE d'images + chargement paresseux (à l'affichage, pas au démarrage) ── */
+const imgCache=new Map();          // id -> dataURL (déjà téléchargé)
+const imgPending=new Map();        // id -> Promise en cours
+function imgColl(){ return firebase.firestore().collection('ateliers').doc(fbUser.uid).collection('imgs'); }
+async function fetchImg(id){
+  if(imgCache.has(id)) return imgCache.get(id);
+  if(imgPending.has(id)) return imgPending.get(id);
+  const p=imgColl().doc(id).get().then(sn=>{ const src=sn.exists?(sn.data().src||''):''; imgCache.set(id,src); imgPending.delete(id); return src; })
+                            .catch(()=>{ imgPending.delete(id); return ''; });
+  imgPending.set(id,p); return p;
 }
+/* Résout la src d'une <img> : si _imgRef, télécharge à la demande puis remplit. */
+function resolveImgEl(imgEl, src, ref){
+  if(src && src!=='__ref__'){ imgEl.src=src; return; }
+  if(!ref){ return; }
+  if(imgCache.has(ref)){ const v=imgCache.get(ref); if(v) imgEl.src=v; return; }
+  fetchImg(ref).then(v=>{ if(v) imgEl.src=v; });
+}
+/* loadImages NE télécharge plus tout : il ne fait que garder _imgRef en place.
+   (gardé pour compatibilité : renvoie l'état tel quel) */
+async function loadImages(db,uid,s){ return s; }
 
 /* ── réparation au démarrage : nettoyer les data: coincés dans le doc principal ── */
 async function repairImages(db,uid){
@@ -495,10 +503,14 @@ function persist(immediate){
     clearTimeout(saveT2);
     const write=async()=>{
       const db=firebase.firestore();
-      await saveImages(db,fbUser.uid,state);
-      const light=stripImages(state);
-      const json=JSON.stringify(light); lastJSON=json;
-      await fbDoc.set({json,ts:Date.now()});
+      // 1) sauver les images data: dans la sous-collection imgs/
+      const refs=collectImgRefs(state);
+      await Promise.all(refs.map(r=>imgColl().doc(r.id).set({src:r.obj[r.key]})));
+      // 2) garder ces images en cache et alléger l'état EN MÉMOIRE (évite de tout re-garder en RAM)
+      refs.forEach(r=>{ imgCache.set(r.id, r.obj[r.key]); r.obj._imgRef=r.id; r.obj[r.key]='__ref__'; });
+      // 3) écrire le doc principal (léger) en fusion pour ne pas écraser d'autres champs
+      const json=JSON.stringify(state); lastJSON=json;
+      await fbDoc.set({json,ts:Date.now()},{merge:true});
       flagSaved();
     };
     immediate?write().catch(e=>{ document.getElementById('saved').textContent="erreur synchro"; console.error(e); })
@@ -577,7 +589,7 @@ viewport.addEventListener('pointermove',e=>{
     if(pD>0)zoomAt(prv.x,prv.y,cD/pD); view.x+=cur.x-prv.x; view.y+=cur.y-prv.y; apply();
   }
 });
-function endPtr(e){ if(ptrs.has(e.pointerId))ptrs.delete(e.pointerId); if(ptrs.size===0){document.body.classList.remove('panning');saveViewSoon();} }
+function endPtr(e){ if(ptrs.has(e.pointerId))ptrs.delete(e.pointerId); if(ptrs.size===0){document.body.classList.remove('panning');saveViewSoon();if(typeof flushRemote==='function')setTimeout(flushRemote,60);} }
 viewport.addEventListener('pointerup',endPtr); viewport.addEventListener('pointercancel',endPtr); viewport.addEventListener('pointerleave',endPtr);
 viewport.addEventListener('wheel',e=>{ e.preventDefault(); const r=viewport.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top; if(e.ctrlKey)zoomAt(px,py,Math.exp(-e.deltaY*0.01)); else zoomAt(px,py,e.deltaY<0?1.1:0.9); },{passive:false});
 viewport.addEventListener('dblclick',e=>{ if(isInteractive(e.target))return; const r=viewport.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,1.4); });
@@ -627,7 +639,7 @@ function renderCard(it){
 }
 function paintImage(it,body){
   body.innerHTML='';
-  if(it.data.src){ const img=document.createElement('img');img.src=it.data.src;img.alt=it.data.cap||"";img.draggable=false;body.appendChild(img); if(it.data.cap){const c=document.createElement('div');c.className='cap';c.textContent=it.data.cap;body.appendChild(c);} }
+  if(it.data.src || it.data._imgRef){ const img=document.createElement('img');img.alt=it.data.cap||"";img.draggable=false;body.appendChild(img); resolveImgEl(img,it.data.src,it.data._imgRef); if(it.data.cap){const c=document.createElement('div');c.className='cap';c.textContent=it.data.cap;body.appendChild(c);} }
   else { const e=document.createElement('div');e.className='empty';e.textContent='Choisir une image';body.appendChild(e); }
   body.onclick=ev=>{ if(ev.target.closest('.rs')||connectMode)return; openPickerCard(it); };
 }
@@ -726,7 +738,8 @@ function renderGallery(){
   const grid=document.createElement('div'); grid.className='gal-grid';
   imgs.forEach((g,i)=>{
     const fig=document.createElement('div'); fig.className='gal-item';
-    fig.innerHTML=`<img loading="lazy" src="${g.src}" alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
+    fig.innerHTML=`<img loading="lazy" alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
+    resolveImgEl(fig.querySelector('img'), g.src, g._imgRef);
     fig.querySelector('img').addEventListener('click',()=>openGlb(i));
     fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation(); al.images=al.images.filter(x=>x.id!==g.id); renderGallery(); save(); });
     grid.appendChild(fig);
@@ -738,7 +751,7 @@ document.getElementById('gal-add').addEventListener('click',openPickerGallery);
 /* lightbox galerie */
 let glbI=0;
 function openGlb(i){ glbI=i; showGlb(); document.getElementById('glb').classList.add('on'); }
-function showGlb(){ const al=activeAlbumObj(); const g=(al&&al.images||[])[glbI]; if(!g)return; document.getElementById('glb-img').src=g.src; }
+function showGlb(){ const al=activeAlbumObj(); const g=(al&&al.images||[])[glbI]; if(!g)return; const im=document.getElementById('glb-img'); im.src=''; resolveImgEl(im,g.src,g._imgRef); }
 function glbStep(d){ const al=activeAlbumObj(); const n=(al&&al.images||[]).length; if(!n)return; glbI=(glbI+d+n)%n; showGlb(); }
 document.getElementById('glb-x').onclick=()=>document.getElementById('glb').classList.remove('on');
 document.getElementById('glb-prev').onclick=()=>glbStep(-1);
@@ -809,33 +822,53 @@ function startLocal(){
   window.addEventListener('storage',ev=>{ if(ev.key===KEY&&ev.newValue){ try{ state=JSON.parse(ev.newValue); rerenderAll(); }catch(e){} } });
 }
 
+/* ── application d'un état distant reçu par synchro ── */
+let pendingRemote=null;
+function applyRemote(j){
+  try{
+    const s=JSON.parse(j);
+    const curBoard=state&&state.activeBoard, curAlbum=state&&state.activeAlbum;
+    state=s;
+    // garder l'onglet/tableau/album courant si toujours présent
+    if(curBoard && (state.boards||[]).some(b=>b.id===curBoard)) state.activeBoard=curBoard;
+    if(curAlbum && (state.albums||[]).some(a=>a.id===curAlbum)) state.activeAlbum=curAlbum;
+    lastJSON=j;
+    rerenderAll();
+  }catch(e){}
+}
+function flushRemote(){
+  if(pendingRemote && !isEditing() && !document.body.classList.contains('panning')){
+    const j=pendingRemote; pendingRemote=null;
+    if(j!==lastJSON) applyRemote(j);
+  }
+}
+document.addEventListener('focusout',()=>setTimeout(flushRemote,80));
+
 /* ── démarrage FIREBASE (synchro multi-appareils) ── */
 async function startFB(){
   const db=firebase.firestore();
   fbDoc=db.collection('ateliers').doc(fbUser.uid);
   try{
-    // 1) réparer d'abord si des data: sont coincés dans le doc principal
+    // 1) réparer d'abord si des data: sont coincés dans le doc principal (ancien bug)
     await repairImages(db,fbUser.uid);
-    // 2) charger l'état (maintenant propre)
+    // 2) charger l'état léger (les images se chargeront à l'affichage, pas maintenant)
     const snap=await fbDoc.get();
     if(snap.exists && snap.data().json){
       state=JSON.parse(snap.data().json);
-      state=await loadImages(db,fbUser.uid,state);
       lastJSON=snap.data().json;
     }
     else { state=defaultState(); persist(true); }
   }catch(e){ state=defaultState(); flash("Lecture impossible — vérifie les règles Firestore."); }
   bootUI();
   setTimeout(()=>flash("Synchronisé. Pince pour zoomer · « Relier » pour des flèches"),700);
+  // état initial : on ne télécharge PAS les images (paresseux). On garde juste le JSON.
   fbDoc.onSnapshot(snap=>{
-    if(!snap.exists||snap.metadata.hasPendingWrites)return;
-    const j=snap.data().json; if(!j||j===lastJSON)return;
-    if(isEditing()){ lastJSON=j; return; }
-    lastJSON=j;
-    try{
-      const s=JSON.parse(j);
-      loadImages(firebase.firestore(),fbUser.uid,s).then(full=>{ state=full; rerenderAll(); });
-    }catch(e){}
+    if(!snap.exists||snap.metadata.hasPendingWrites)return;       // ignore nos propres écritures
+    const j=snap.data().json; if(!j||j===lastJSON)return;          // rien de neuf
+    if(isEditing()||document.body.classList.contains('panning')){  // ne pas interrompre une saisie / un déplacement
+      pendingRemote=j; return;
+    }
+    applyRemote(j);
   });
 }
 
