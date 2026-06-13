@@ -1162,6 +1162,36 @@ document.getElementById('site-save').addEventListener('click',saveSite);
    Upload non signé : aucune clé secrète n'est exposée ici. */
 const CLOUDINARY = { cloudName:"dzq1a6leu", uploadPreset:"site-raphael" };
 
+/* URL de ton Cloudflare Worker de suppression (à remplir après déploiement).
+   Tant qu'elle est vide, « Supprimer » retire seulement de la liste. */
+const DELETE_WORKER_URL = "https://cloudinary-delete.raphaelguerin06.workers.dev/";
+
+async function deleteFile(f){
+  if(!confirm("Supprimer définitivement « "+f.name+" » ?\n\nLe fichier sera effacé de Cloudinary ET de la liste."))return;
+  // Pas de Worker configuré -> on retire juste de la liste
+  if(!DELETE_WORKER_URL || !f.public_id){
+    state.files=(state.files||[]).filter(x=>x.id!==f.id); renderFiles(); save();
+    flash(DELETE_WORKER_URL? "Retiré (public_id manquant)":"Retiré de la liste");
+    return;
+  }
+  showProg("Suppression…");
+  try{
+    const res=await fetch(DELETE_WORKER_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ public_id:f.public_id, resource_type:f.resource_type||"image" })
+    });
+    const data=await res.json().catch(()=>({}));
+    if(res.ok && (data.result==="ok"||data.result==="not found")){
+      state.files=(state.files||[]).filter(x=>x.id!==f.id); renderFiles(); save();
+      flash(data.result==="not found"?"Déjà absent de Cloudinary — retiré":"Supprimé de Cloudinary ✓");
+    } else {
+      flash("Échec suppression : "+(data.error||data.result||res.status));
+    }
+  }catch(e){ console.error(e); flash("Suppression impossible (Worker injoignable)"); }
+  finally{ hideProg(); }
+}
+
 function fmtSize(b){ if(!b&&b!==0)return""; if(b<1024)return b+" o"; if(b<1048576)return (b/1024).toFixed(0)+" Ko"; return (b/1048576).toFixed(1)+" Mo"; }
 function fileKind(f){ const t=f.type||""; if(t.startsWith('image/'))return'image'; if(t.startsWith('video/'))return'video'; if(t==='application/pdf')return'pdf'; return'raw'; }
 
@@ -1184,6 +1214,8 @@ function cloudinaryUpload(file,onProgress){
             name:file.name||(r.original_filename||'fichier'),
             kind:fileKind(file),
             url:r.secure_url,
+            public_id:r.public_id||'',
+            resource_type:r.resource_type||'image',
             bytes:r.bytes||file.size||0,
             format:r.format||'',
             width:r.width||0, height:r.height||0,
@@ -1255,12 +1287,8 @@ function renderFiles(){
     const dl=document.createElement('a'); dl.textContent='Télécharger';
     dl.href=f.url.replace('/upload/','/upload/fl_attachment/'); dl.setAttribute('download',''); dl.rel='noopener';
     const open=document.createElement('a'); open.textContent='Ouvrir'; open.href=f.url; open.target='_blank'; open.rel='noopener';
-    const rm=document.createElement('button'); rm.className='rm'; rm.textContent='Retirer';
-    rm.addEventListener('click',()=>{
-      if(confirm("Retirer « "+f.name+" » de la liste ?\n\nLe fichier reste stocké sur Cloudinary ; tu peux le purger depuis leur tableau de bord.")){
-        state.files=(state.files||[]).filter(x=>x.id!==f.id); renderFiles(); save(); flash("Retiré de la liste");
-      }
-    });
+    const rm=document.createElement('button'); rm.className='rm'; rm.textContent='Supprimer';
+    rm.addEventListener('click',()=>deleteFile(f));
     ops.appendChild(dl); ops.appendChild(open); ops.appendChild(rm);
 
     it.appendChild(thumb); it.appendChild(meta); it.appendChild(ops);
