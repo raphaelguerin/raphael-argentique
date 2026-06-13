@@ -157,7 +157,7 @@ body.connecting .card{cursor:crosshair}
 @media(max-width:900px){.gal-grid{columns:2}}
 @media(max-width:560px){.gal-grid{columns:1}}
 .gal-item{break-inside:avoid;margin:0 0 14px;position:relative;background:var(--mat);padding:8px;box-shadow:0 1px 0 var(--hair),0 16px 36px -32px rgba(0,0,0,.5);cursor:zoom-in}
-.gal-item img{width:100%;height:auto;display:block}
+.gal-item img{width:100%;height:auto;display:block;min-height:80px;background:var(--tab)}
 .gal-item .gcap{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);padding:8px 2px 2px}
 .gal-item .gdel{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(244,244,241,.92);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:14px;opacity:0;transition:opacity .2s}
 .gal-item:hover .gdel{opacity:1}
@@ -738,7 +738,7 @@ function renderGallery(){
   const grid=document.createElement('div'); grid.className='gal-grid';
   imgs.forEach((g,i)=>{
     const fig=document.createElement('div'); fig.className='gal-item';
-    fig.innerHTML=`<img loading="lazy" alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
+    fig.innerHTML=`<img alt=""><button class="gdel">✕</button>${g.cap?`<div class="gcap">${escapeHtml(g.cap)}</div>`:''}`;
     resolveImgEl(fig.querySelector('img'), g.src, g._imgRef);
     fig.querySelector('img').addEventListener('click',()=>openGlb(i));
     fig.querySelector('.gdel').addEventListener('click',e=>{ e.stopPropagation(); al.images=al.images.filter(x=>x.id!==g.id); renderGallery(); save(); });
@@ -849,15 +849,24 @@ async function startFB(){
   const db=firebase.firestore();
   fbDoc=db.collection('ateliers').doc(fbUser.uid);
   try{
-    // 1) réparer d'abord si des data: sont coincés dans le doc principal (ancien bug)
-    await repairImages(db,fbUser.uid);
-    // 2) charger l'état léger (les images se chargeront à l'affichage, pas maintenant)
+    // Un seul get() — partagé entre repair et chargement initial
     const snap=await fbDoc.get();
+    // réparer d'abord si des data: sont coincés dans le doc principal (ancien bug)
     if(snap.exists && snap.data().json){
-      state=JSON.parse(snap.data().json);
-      lastJSON=snap.data().json;
-    }
-    else { state=defaultState(); persist(true); }
+      const s=JSON.parse(snap.data().json);
+      const refs=collectImgRefs(s);
+      if(refs.length){
+        flash("Réparation en cours…");
+        await saveImages(db,fbUser.uid,s);
+        const light=stripImages(s);
+        const j=JSON.stringify(light); lastJSON=j;
+        await fbDoc.set({json:j,ts:Date.now()},{merge:true});
+        state=light;
+        flash("Réparation terminée ✓");
+      } else {
+        state=s; lastJSON=snap.data().json;
+      }
+    } else { state=defaultState(); persist(true); }
   }catch(e){ state=defaultState(); flash("Lecture impossible — vérifie les règles Firestore."); }
   bootUI();
   setTimeout(()=>flash("Synchronisé. Pince pour zoomer · « Relier » pour des flèches"),700);
