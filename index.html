@@ -165,6 +165,10 @@ footer .label a:hover{color:var(--ink)}
   .contents .meta{display:none}
   .top nav a:not(.atelier){display:none}
 }
+
+/* lien "voir la série" sur index */
+.serie-cta{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);border:1px solid var(--hair);padding:10px 16px;transition:color .25s,border-color .25s,padding-left .25s var(--ease);margin-top:4px}
+.serie-cta:hover{color:var(--ink);border-color:var(--ink);padding-left:22px}
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto}
   .reveal{opacity:1;transform:none;transition:none}
@@ -202,8 +206,8 @@ footer .label a:hover{color:var(--ink)}
 
 <!-- SOMMAIRE -->
 <nav class="contents reveal" aria-label="Sommaire des séries">
-  <a class="row" href="#serie-01"><span class="num">01</span><span class="nm">Neige noire<small>Ilford HP5+ 400 — Font-Romeu</small></span><span class="meta label">Hiver 2026 · 08 vues</span></a>
-  <a class="row" href="#serie-02"><span class="num">02</span><span class="nm">Hossegor, 19&nbsp;h<small>Kodak UltraMax 400 — Côte atlantique</small></span><span class="meta label">Été 2025 · 17 vues</span></a>
+  <a class="row" href="serie-01.html"><span class="num">01</span><span class="nm">Neige noire<small>Ilford HP5+ 400 — Font-Romeu</small></span><span class="meta label">Hiver 2026 · 08 vues</span></a>
+  <a class="row" href="serie-02.html"><span class="num">02</span><span class="nm">Hossegor, 19&nbsp;h<small>Kodak UltraMax 400 — Côte atlantique</small></span><span class="meta label">Été 2025 · 17 vues</span></a>
   <a class="row" href="#serie-03"><span class="num">03</span><span class="nm">Petit inventaire<small>Kodak Portra 400 — Intérieurs</small></span><span class="meta label">À venir</span></a>
   <a class="row soon" href="#serie-04"><span class="num">04</span><span class="nm">Sans titre<small>Ilford Delta 3200 — Nuit</small></span><span class="meta label">À venir</span></a>
 </nav>
@@ -222,6 +226,7 @@ footer .label a:hover{color:var(--ink)}
       <div class="cell"><div class="k">Période</div><div class="v" data-edit="s01.t3">Hiver 2026</div></div>
       <div class="cell"><div class="k">Sélection</div><div class="v" data-edit="s01.t4">08 / 36</div></div>
     </div>
+    <a class="serie-cta" href="serie-01.html">Voir la série complète →</a>
   </div>
   <div class="plates" data-series="01">
         <div class="plate feature" data-img="img_5825.jpg"><figure data-full="images/img_5825.jpg" data-cap="01.01 · HP5+ 400 · 35 mm">
@@ -279,6 +284,7 @@ footer .label a:hover{color:var(--ink)}
       <div class="cell"><div class="k">Période</div><div class="v" data-edit="s02.t3">Été 2025</div></div>
       <div class="cell"><div class="k">Sélection</div><div class="v" data-edit="s02.t4">17 / 24</div></div>
     </div>
+    <a class="serie-cta" href="serie-02.html">Voir la série complète →</a>
   </div>
   <div class="plates" data-series="02">
         <div class="plate feature" data-img="img_3859.jpg"><figure data-full="images/img_3859.jpg" data-cap="02.01 · UltraMax 400 · 35 mm">
