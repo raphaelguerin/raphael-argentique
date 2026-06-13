@@ -1160,7 +1160,7 @@ document.getElementById('site-save').addEventListener('click',saveSite);
    Seul un index léger (nom, type, url, date) est gardé dans state.files,
    synchronisé via Firestore comme le reste de l'atelier.
    Upload non signé : aucune clé secrète n'est exposée ici. */
-const CLOUDINARY = { cloudName:"dzq1a6leu", uploadPreset:"ml_default" };
+const CLOUDINARY = { cloudName:"dzq1a6leu", uploadPreset:"site-raphael" };
 
 function fmtSize(b){ if(!b&&b!==0)return""; if(b<1024)return b+" o"; if(b<1048576)return (b/1024).toFixed(0)+" Ko"; return (b/1048576).toFixed(1)+" Mo"; }
 function fileKind(f){ const t=f.type||""; if(t.startsWith('image/'))return'image'; if(t.startsWith('video/'))return'video'; if(t==='application/pdf')return'pdf'; return'raw'; }
